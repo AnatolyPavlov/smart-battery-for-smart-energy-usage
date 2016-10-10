@@ -6,53 +6,11 @@ date-time stamp will be the index of the pd.DataFrame while corresponding
 measurements of the power set as values in a single column in the pd.DataFrame.'''
 
 import pandas as pd
-import numpy as np
-from sklearn.pipeline import Pipeline, make_pipeline
 from datetime import timedelta
 from collections import Counter
 
 pd.options.mode.chained_assignment = None
 
-def show_households(df):
-    print
-    print 'All households in this subset of data:'
-    print df['LCLid'].unique()
-    print
-    print 'Total number of households: {}'.format(len(df['LCLid'].unique()))
-    print
-    return df['LCLid'].unique()
-
-def find_all_indexes(lst, item):
-    return [i for i, x in enumerate(lst) if x==item]
-
-def show_days_details(df, day_index=0):
-    datetimes = df.index
-    days = []
-    for i, datetime in enumerate(datetimes):
-        if datetime.date() not in days:
-            days.append(datetime.date())
-
-    print 'Printing days where number of records is not 48.'
-    print
-    for i, day in enumerate(days):
-        next_day = day + timedelta(days=1)
-        df_day = df.query('index >= @day and index < @next_day')
-        if len(df_day) != 48:
-            print '{}, {}, {}'.format(i, day, len(df_day))
-    print
-    print 'Total number of days for this household: {}'.format(len(days))
-    print
-
-    # show a single day time-series
-    day = days[day_index]
-    next_day = day + timedelta(days=1)
-    df_day = df.query('index >= @day and index < @next_day')
-    print
-    print 'Time-series for {}. Todal number of records: {}'.format(day, len(df_day))
-    print
-    print df_day
-
-#========================================================================================
 class ChooseHousehold(object):
 
     def __init__(self, household_id=None):
@@ -124,38 +82,3 @@ class ExtractTimeSeries(object):
         df_out = pd.DataFrame(df[self.yt_col].values, columns=[self.yt_col],\
                                     index=df[self.datetime_col].values)
         return df_out
-
-
-if __name__ == '__main__':
-    path_data =\
-    '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_1.csv'
-    path_data2 =\
-    '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_2.csv'
-    df = pd.read_csv(path_data)
-    households = show_households(df)
-    household = households[0]
-
-    ch = ChooseHousehold(household)
-    df = ch.transform(df)
-    #
-    csf = ConvertStrFloat('KWH/hh (per half hour) ')
-    df = csf.transform(df)
-    #
-    cd = CleanData(datetime_col='DateTime', yt_col='KWH/hh (per half hour) ')
-    df = cd.drop_duplicate_records(df)
-    df = cd.drop_missing_val(df)
-    df = cd.drop_null_val(df)
-    df = cd.drop_incomplete_days(df)
-
-
-    #
-    ets = ExtractTimeSeries(datetime_col='DateTime', yt_col='KWH/hh (per half hour) ')
-    df = ets.transform(df)
-    #
-    show_days_details(df)
-    print
-    print 'Above results are for the household_id: {}'.format(household)
-    '''print 'First and last 5 rows of time-series for the household_id: {}'.format(household)
-    print df.head()
-    print
-    print df.tail()'''
