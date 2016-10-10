@@ -86,8 +86,11 @@ class CleanData(object):
         df.dropna(how='any', subset=[self.yt_col], thresh=1, inplace=True)
 
     def drop_incomplete_days(self, df):
+        print
+        print 'Original indexes:', df.index
         datetimes = pd.to_datetime(df[self.datetime_col])
-        #print datetimes
+        print
+        print 'datetimes indexes:', datetimes.index
         days = []
         for i, datetime in enumerate(datetimes):
             if datetime.date() not in days:
@@ -100,7 +103,15 @@ class CleanData(object):
             if len(df_day) < 48:
                 days_to_drop.append(day)
 
-        print days_to_drop
+        daytimes_indexes = []
+        for i, datetime in enumerate(datetimes):
+            if datetime.date() in days_to_drop:
+                #print ' index: {}, datetime: {}'.format(i, datetime)
+                daytimes_indexes.append(i)
+        #print
+        #print 'daytimes_indexes:'
+        #print daytimes_indexes
+        #df.drop(daytimes_indexes, inplace=True)
 
 class ExtractTimeSeries(object):
 
