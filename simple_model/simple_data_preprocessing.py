@@ -85,8 +85,12 @@ class CleanData(object):
     def drop_missing_val(self, df):
         df.dropna(how='any', subset=[self.yt_col], thresh=1, inplace=True)
 
+    def drop_null_val(self, df):
+        df_out = df.loc[df[self.yt_col] != 0]
+        return df_out
+
     def drop_incomplete_days(self, df):
-        datetimes = pd.to_datetime(df[self.datetime_col]) 
+        datetimes = pd.to_datetime(df[self.datetime_col])
         days = []
         for i, datetime in enumerate(datetimes):
             if datetime.date() not in days:
@@ -127,7 +131,7 @@ if __name__ == '__main__':
     '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_2.csv'
     df = pd.read_csv(path_data)
     households = show_households(df)
-    household = households[28]
+    household = households[0]
 
     ch = ChooseHousehold(household)
     df = ch.transform(df)
@@ -138,6 +142,7 @@ if __name__ == '__main__':
     cd = CleanData(datetime_col='DateTime', yt_col='KWH/hh (per half hour) ')
     cd.drop_duplicate_records(df)
     cd.drop_missing_val(df)
+    df = cd.drop_null_val(df)
     cd.drop_incomplete_days(df)
 
 
