@@ -1,9 +1,9 @@
 '''This module contains methods for data preprocessing to apply to the data
 before using it to train a model. It is designed to pre-process data of London
-household smart meters readings of electric power consomption. The output of
-the pipeline will be the time series as pandas pd.DataFrame object, where date-time
-stamp will be the index of the pd.DataFrame while corresponding measurements
-of the power set as values in a single column in the pd.DataFrame object.'''
+household smart meters readings of electric power consomption. Final if all
+methods were applyed is the time series as pandas pd.DataFrame object, where
+date-time stamp will be the index of the pd.DataFrame while corresponding
+measurements of the power set as values in a single column in the pd.DataFrame.'''
 
 import pandas as pd
 import numpy as np
@@ -80,10 +80,12 @@ class CleanData(object):
         self.yt_col = yt_col
 
     def drop_duplicate_records(self, df):
-        df.drop_duplicates(subset=self.datetime_col, keep='first', inplace=True)
+        df_out = df.drop_duplicates(subset=self.datetime_col, keep='first')
+        return df_out
 
     def drop_missing_val(self, df):
-        df.dropna(how='any', subset=[self.yt_col], thresh=1, inplace=True)
+        df_out = df.dropna(how='any', subset=[self.yt_col], thresh=1)
+        return df_out
 
     def drop_null_val(self, df):
         df_out = df.loc[df[self.yt_col] != 0]
@@ -106,9 +108,9 @@ class CleanData(object):
         daytimes_indexes = []
         for i, datetime in enumerate(datetimes):
             if datetime.date() in days_to_drop:
-                #print ' index: {}, datetime: {}'.format(df.index[i], datetime.date())
                 daytimes_indexes.append(df.index[i])
-        df.drop(daytimes_indexes, inplace=True)
+        df_out = df.drop(daytimes_indexes)
+        return df_out
 
 class ExtractTimeSeries(object):
 
@@ -140,10 +142,10 @@ if __name__ == '__main__':
     df = csf.transform(df)
     #
     cd = CleanData(datetime_col='DateTime', yt_col='KWH/hh (per half hour) ')
-    cd.drop_duplicate_records(df)
-    cd.drop_missing_val(df)
+    df = cd.drop_duplicate_records(df)
+    df = cd.drop_missing_val(df)
     df = cd.drop_null_val(df)
-    cd.drop_incomplete_days(df)
+    df = cd.drop_incomplete_days(df)
 
 
     #
