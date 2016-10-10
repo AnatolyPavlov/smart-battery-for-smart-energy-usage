@@ -86,11 +86,7 @@ class CleanData(object):
         df.dropna(how='any', subset=[self.yt_col], thresh=1, inplace=True)
 
     def drop_incomplete_days(self, df):
-        print
-        print 'Original indexes:', df.index
-        datetimes = pd.to_datetime(df[self.datetime_col])
-        print
-        print 'datetimes indexes:', datetimes.index
+        datetimes = pd.to_datetime(df[self.datetime_col]) 
         days = []
         for i, datetime in enumerate(datetimes):
             if datetime.date() not in days:
@@ -106,12 +102,9 @@ class CleanData(object):
         daytimes_indexes = []
         for i, datetime in enumerate(datetimes):
             if datetime.date() in days_to_drop:
-                #print ' index: {}, datetime: {}'.format(i, datetime)
-                daytimes_indexes.append(i)
-        #print
-        #print 'daytimes_indexes:'
-        #print daytimes_indexes
-        #df.drop(daytimes_indexes, inplace=True)
+                #print ' index: {}, datetime: {}'.format(df.index[i], datetime.date())
+                daytimes_indexes.append(df.index[i])
+        df.drop(daytimes_indexes, inplace=True)
 
 class ExtractTimeSeries(object):
 
@@ -134,7 +127,7 @@ if __name__ == '__main__':
     '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_2.csv'
     df = pd.read_csv(path_data)
     households = show_households(df)
-    household = households[0]
+    household = households[28]
 
     ch = ChooseHousehold(household)
     df = ch.transform(df)
@@ -146,6 +139,8 @@ if __name__ == '__main__':
     cd.drop_duplicate_records(df)
     cd.drop_missing_val(df)
     cd.drop_incomplete_days(df)
+
+
     #
     ets = ExtractTimeSeries(datetime_col='DateTime', yt_col='KWH/hh (per half hour) ')
     df = ets.transform(df)
