@@ -8,48 +8,13 @@ import sys
 from datetime import timedelta
 
 # Custom Modules:
-from simple_data_preprocessing import ChooseHousehold, ConvertStrFloat
-from simple_data_preprocessing import CleanData, ExtractTimeSeries
-
-def show_households(df):
-    print
-    print 'All households in this subset of data:'
-    print df['LCLid'].unique()
-    print
-    print 'Total number of households: {}'.format(len(df['LCLid'].unique()))
-    print
-    return df['LCLid'].unique()
-
-def show_days_details(df, day_index=0):
-    datetimes = df.index
-    days = []
-    for i, datetime in enumerate(datetimes):
-        if datetime.date() not in days:
-            days.append(datetime.date())
-
-    print 'Printing days where number of records is not 48.'
-    print
-    for i, day in enumerate(days):
-        next_day = day + timedelta(days=1)
-        df_day = df.query('index >= @day and index < @next_day')
-        if len(df_day) != 48:
-            print '{}, {}, {}'.format(i, day, len(df_day))
-    print
-    print 'Total number of days for this household: {}'.format(len(days))
-    print
-
-    # show a single day time-series
-    day = days[day_index]
-    next_day = day + timedelta(days=1)
-    df_day = df.query('index >= @day and index < @next_day')
-    print
-    print 'Time-series for {}. Todal number of records: {}'.format(day, len(df_day))
-    print
-    print df_day
+from simple_data_preprocessing import ChooseHousehold, ConvertStrFloat,\
+CleanData, ExtractTimeSeries
 
 
 if __name__ == '__main__':
     action = sys.argv[1]
+    household = sys.argv[2]
     if action == 'data':
         path_data =\
         '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_1.csv'
@@ -59,8 +24,6 @@ if __name__ == '__main__':
         print '## Loading Data'
         print
         df = pd.read_csv(path_data)
-        households = show_households(df)
-        household = households[0]
 
         print
         print '## Data Preprocessing'
@@ -87,9 +50,18 @@ if __name__ == '__main__':
         print
         print '## Saving Data'
         print
-        df.to_csv('../clean_data/'+household+'.csv')
+        path_to_clean_data = '../clean_data/'+household+'.csv'
+        df.to_csv(path_to_clean_data)
+        print 'Clean data saved in: {}'.format(path_to_clean_data)
+        print
+        print 'To train model type in command line:'
+        print 'python simple_main.py model {}'.format(path_to_clean_data)
+        print
 
     if action == 'model':
         print
         print '## Training Model'
         print
+        path_to_clean_data = sys.argv[2]
+        df = pd.read_csv(path_to_clean_data)
+        print df.head()
