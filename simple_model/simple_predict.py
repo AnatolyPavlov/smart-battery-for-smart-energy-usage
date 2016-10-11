@@ -29,6 +29,12 @@ class PredictARMA(object):
         print 'end_day: ', self.end_day
         print
         pred = self.model_unpickled.predict(start=self.start_day, end=self.end_day)
+        print
+        print '## Saving Predictions'
+        print
+        path_to_pred = 'predictions/pred_'+self.start_day+'_'+self.end_day+'.csv'
+        pred.to_csv(path_to_pred)
+        print 'Predictions saved into: {}'.format(path_to_pred)
         return pred
 
     def plot_pred_timeseries(self, df, pred):
