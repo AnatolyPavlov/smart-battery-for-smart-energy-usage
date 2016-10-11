@@ -14,7 +14,7 @@ class TimeSeriesDataSplit(object):
     def __init__(self, test_set_first_date):
         '''INPUT: last date in training data subset.
         The type and format of date should be: str, yyyy-mm-dd
-        for example: '2013-06-21' '''
+        for example: '2013-06-22' '''
         self.test_set_first_date = pd.to_datetime(test_set_first_date)
         self.test_set_first_date = self.test_set_first_date.date()
 
@@ -22,6 +22,24 @@ class TimeSeriesDataSplit(object):
         df_train = df.query('index < @self.test_set_first_date')
         df_test = df.query('index >= @self.test_set_first_date')
         return df_train, df_test
+
+class ModelARMA(object):
+
+    def __init__(self, p, q, freq=None):
+        self.p = p
+        self.q = q
+        self.freq = freq
+
+    def fit(self, df_train):
+        model = sm.tsa.ARMA(df_train, order=(self.p, self.q), freq=self.freq)
+        model_res = model.fit(trend='c',disp=-1)
+        #
+        print
+        print '## Producing Summary of the Model'
+        print
+        print model_res.summary()
+        #
+        return model_res
 
 
 if __name__ == '__main__':
@@ -51,3 +69,9 @@ if __name__ == '__main__':
     print df_test.head()
     print df_test.tail()
     print
+    #
+    print
+    print '## Training Model'
+    print
+    marma = ModelARMA(p=7, q=7, freq='30Min')
+    result = marma.fit(df_train)
