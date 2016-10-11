@@ -9,6 +9,8 @@ what do you want to do:
 To run data preprocessing: python simple_main.py data household_id
 
 To train model: python simple_main.py model path_to_clean_data
+
+To run model for testing or predicting: python simple_main.py predict path_to_model path_to_test_data
 '''
 
 import sys
@@ -19,13 +21,16 @@ from datetime import timedelta
 # Custom Modules:
 from simple_data_preprocessing import ChooseHousehold, ConvertStrFloat,\
 CleanData, ExtractTimeSeries
+
 from simple_model_arma import TimeSeriesDataSplit, ModelARMA
+
+from simple_predict import PredictARMA
 
 
 if __name__ == '__main__':
     action = sys.argv[1]
-    household_id = sys.argv[2]
     if action == 'data':
+        household_id = sys.argv[2]
         path_data =\
         '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_1.csv'
         path_data2 =\
@@ -62,7 +67,7 @@ if __name__ == '__main__':
         print 'To train model type in command line:'
         print 'python simple_main.py model {}'.format(path_to_clean_data)
         print
-
+#=============================================================================================
     if action == 'model':
         path_to_clean_data = sys.argv[2]
         print
@@ -88,6 +93,15 @@ if __name__ == '__main__':
         print df_test.head()
         print df_test.tail()
         print
+        print
+        print '## Saving Train and Test Data'
+        print
+        path_to_train_data = '../clean_data/df_train.csv'
+        path_to_test_data = '../clean_data/df_test.csv'
+        df_train.to_csv(path_to_train_data)
+        df_test.to_csv(path_to_test_data)
+        print 'Train data saved into: {}'.format(path_to_train_data)
+        print 'Test data saved into: {}'.format(path_to_test_data)
         #
         print
         print '## Training Model'
@@ -102,3 +116,21 @@ if __name__ == '__main__':
         with open(model_name, 'w') as f:
             pickle.dump(marma, f)
         print 'Model saved into the file: {}'.format(model_name)
+#=============================================================================================
+    if action == 'predict':
+        path_to_model = sys.argv[2]
+        path_to_test_data = sys.argv[3]
+        #path_to_train_data = sys.argv[4]
+        print
+        print '## Loading Test Data'
+        print
+        df_test = pd.read_csv(path_to_test_data)
+        #
+        cols = df_test.columns
+        ets = ExtractTimeSeries(datetime_col=cols[0], yt_col=cols[1])
+        df_test = ets.transform(df_test)
+        #
+        parma = PredictARMA(path_to_model)
+        y_pred = parma.predict(df_test)
+        #
+        parma.plot_pred_timeseries(df_test, y_pred)
