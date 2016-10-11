@@ -11,13 +11,15 @@ To run data preprocessing: python simple_main.py data household_id
 To train model: python simple_main.py model path_to_clean_data
 '''
 
-import pandas as pd
 import sys
+import pandas as pd
+import cPickle as pickle
 from datetime import timedelta
 
 # Custom Modules:
 from simple_data_preprocessing import ChooseHousehold, ConvertStrFloat,\
 CleanData, ExtractTimeSeries
+from simple_model_arma import TimeSeriesDataSplit, ModelARMA
 
 
 if __name__ == '__main__':
@@ -62,9 +64,41 @@ if __name__ == '__main__':
         print
 
     if action == 'model':
+        path_to_clean_data = sys.argv[2]
+        print
+        print '## Loading Postprocessed Data'
+        print
+        df = pd.read_csv(path_to_clean_data)
+        #
+        cols = df.columns
+        ets = ExtractTimeSeries(datetime_col=cols[0], yt_col=cols[1])
+        df = ets.transform(df)
+        #
+        print
+        print '## Splitting Data into Train and Test Subsets'
+        print
+        tsds = TimeSeriesDataSplit('2013-06-22')
+        df_train, df_test = tsds.train_test_split(df)
+        print
+        print 'Training data set'
+        print df_train.head()
+        print df_train.tail()
+        print
+        print 'Test data set'
+        print df_test.head()
+        print df_test.tail()
+        print
+        #
         print
         print '## Training Model'
         print
-        path_to_clean_data = sys.argv[2]
-        df = pd.read_csv(path_to_clean_data)
-        print df.head()
+        marma = ModelARMA(p=5, q=3, freq='30Min').fit(df_train)
+        #
+        print
+        print '## Saving Model'
+        print
+        class_name = str(marma.__class__).strip("'>").split('.')[-1]
+        model_name = class_name+'.pkl'
+        with open(model_name, 'w') as f:
+            pickle.dump(marma, f)
+        print 'Model saved into the file: {}'.format(model_name)

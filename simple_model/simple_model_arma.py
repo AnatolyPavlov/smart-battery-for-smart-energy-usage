@@ -5,7 +5,6 @@ trained model as .pkl file, so that it can be uploaded and used to make predicti
 and/or test the model on test data set.'''
 
 import pandas as pd
-import sys
 import statsmodels.api as sm
 from statsmodels.tsa.arima_process import arma_generate_sample
 
@@ -40,38 +39,3 @@ class ModelARMA(object):
         print model_res.summary()
         #
         return model_res
-
-
-if __name__ == '__main__':
-    path_to_clean_data = sys.argv[1]
-    print
-    print '## Loading Postprocessed Data'
-    print
-    df = pd.read_csv(path_to_clean_data)
-    cols = df.columns
-    #
-    df[cols[0]] = pd.Series(pd.to_datetime(df[cols[0]]),\
-    index=df.index)
-    df = pd.DataFrame(df[cols[1]].values, columns=[cols[1]],\
-    index=df[cols[0]].values)
-    #
-    print
-    print '## Splitting Data into Train and Test Subsets'
-    print
-    tsds = TimeSeriesDataSplit('2013-06-22')
-    df_train, df_test = tsds.train_test_split(df)
-    print
-    print 'Training data set'
-    print df_train.head()
-    print df_train.tail()
-    print
-    print 'Test data set'
-    print df_test.head()
-    print df_test.tail()
-    print
-    #
-    print
-    print '## Training Model'
-    print
-    marma = ModelARMA(p=7, q=7, freq='30Min')
-    result = marma.fit(df_train)
