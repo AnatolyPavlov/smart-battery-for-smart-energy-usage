@@ -8,6 +8,9 @@ what do you want to do:
 
 To run data preprocessing: python simple_main.py data household_id
 
+To plot ACF and PACF graph to help in chosing p and q parameters to
+train model with, type: python simple_main.py ACF_PACF path_to_clean_data
+
 To train model: python simple_main.py model path_to_clean_data
 
 To run model for testing or predicting: python simple_main.py predict path_to_model path_to_test_data
@@ -16,7 +19,9 @@ To run model for testing or predicting: python simple_main.py predict path_to_mo
 import sys
 import pandas as pd
 import cPickle as pickle
+import matplotlib.pyplot as plt
 from datetime import timedelta
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 # Custom Modules:
 from simple_data_preprocessing import ChooseHousehold, ConvertStrFloat,\
@@ -26,6 +31,13 @@ from simple_model_arma import TimeSeriesDataSplit, ModelARMA
 
 from simple_predict import PredictARMA
 
+def plot_acf_pacf(df, lags):
+   fig = plt.figure(figsize=(12,8))
+   ax1 = fig.add_subplot(211)
+   fig = plot_acf(df, lags=lags, ax=ax1)
+   ax2 = fig.add_subplot(212)
+   fig = plot_pacf(df, lags=lags, ax=ax2)
+   plt.show()
 
 if __name__ == '__main__':
     action = sys.argv[1]
@@ -68,6 +80,18 @@ if __name__ == '__main__':
         print 'python simple_main.py model {}'.format(path_to_clean_data)
         print
 #=============================================================================================
+    if action == 'ACF_PACF':
+        path_to_clean_data = sys.argv[2]
+        print
+        print '## Loading Postprocessed Data'
+        print
+        df = pd.read_csv(path_to_clean_data)
+        #
+        cols = df.columns
+        ets = ExtractTimeSeries(datetime_col=cols[0], yt_col=cols[1])
+        df = ets.transform(df)
+        plot_acf_pacf(df, 24)
+#=============================================================================================
     if action == 'model':
         path_to_clean_data = sys.argv[2]
         print
@@ -82,7 +106,7 @@ if __name__ == '__main__':
         print
         print '## Splitting Data into Train and Test Subsets'
         print
-        tsds = TimeSeriesDataSplit('2012-10-14')
+        tsds = TimeSeriesDataSplit('2012-10-15')
         df_train, df_test = tsds.train_test_split(df)
         print
         print 'Training data set'
@@ -106,7 +130,7 @@ if __name__ == '__main__':
         print
         print '## Training Model'
         print
-        marma = ModelARMA(p=8, q=7, freq='30Min').fit(df_train)
+        marma = ModelARMA(p=1, q=1, freq='30Min').fit(df_train)
         #
         print
         print '## Saving Model'

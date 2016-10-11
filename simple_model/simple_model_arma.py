@@ -6,7 +6,7 @@ and/or test the model on test data set.'''
 
 import pandas as pd
 import statsmodels.api as sm
-from statsmodels.tsa.arima_process import arma_generate_sample
+import matplotlib.pyplot as plt
 
 class TimeSeriesDataSplit(object):
 
@@ -38,4 +38,7 @@ class ModelARMA(object):
         print
         print model_res.summary()
         #
+        plt.plot(df_train)
+        plt.plot(model_res.fittedvalues, color='g')
+        plt.show()
         return model_res

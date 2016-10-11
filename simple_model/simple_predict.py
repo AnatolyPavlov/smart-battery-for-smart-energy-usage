@@ -25,8 +25,8 @@ class PredictARMA(object):
         end_day = start_day + timedelta(days=2)
         self.start_day = str(start_day)
         self.end_day = str(end_day)
-        print 'start_day: ', start_day
-        print 'end_day: ', end_day
+        print 'start_day: ', self.start_day
+        print 'end_day: ', self.end_day
         print
         pred = self.model_unpickled.predict(start=self.start_day, end=self.end_day)
         return pred
