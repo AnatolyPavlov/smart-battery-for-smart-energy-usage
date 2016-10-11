@@ -82,7 +82,7 @@ if __name__ == '__main__':
         print
         print '## Splitting Data into Train and Test Subsets'
         print
-        tsds = TimeSeriesDataSplit('2013-06-22')
+        tsds = TimeSeriesDataSplit('2012-10-14')
         df_train, df_test = tsds.train_test_split(df)
         print
         print 'Training data set'
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         print
         print '## Training Model'
         print
-        marma = ModelARMA(p=5, q=3, freq='30Min').fit(df_train)
+        marma = ModelARMA(p=8, q=7, freq='30Min').fit(df_train)
         #
         print
         print '## Saving Model'
