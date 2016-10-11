@@ -57,11 +57,11 @@ def main():
     df = pd.read_csv(path_data)
     #
     households = show_households(df)
-    household = households[0]
-    ch = ChooseHousehold(household)
+    household_id = households[0]
+    ch = ChooseHousehold(household_id)
     df = ch.transform(df)
     #
-    print 'Details of the household: {}'.format(household)
+    print 'Details of the household: {}'.format(household_id)
     print
     show_days_details(df, 'DateTime')
 

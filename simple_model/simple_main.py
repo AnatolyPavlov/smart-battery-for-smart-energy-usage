@@ -3,6 +3,14 @@ modules and runs them in order specified in this module. This module also
 loads row data and outputs, if it is directed so, post-processed data and
 it also saves the model in .pkl file.'''
 
+''' To run this module, type in command line the following depending on
+what do you want to do:
+
+To run data preprocessing: python simple_main.py data household_id
+
+To train model: python simple_main.py model path_to_clean_data
+'''
+
 import pandas as pd
 import sys
 from datetime import timedelta
@@ -14,7 +22,7 @@ CleanData, ExtractTimeSeries
 
 if __name__ == '__main__':
     action = sys.argv[1]
-    household = sys.argv[2]
+    household_id = sys.argv[2]
     if action == 'data':
         path_data =\
         '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_1.csv'
@@ -28,7 +36,7 @@ if __name__ == '__main__':
         print
         print '## Data Preprocessing'
         print
-        ch = ChooseHousehold(household)
+        ch = ChooseHousehold(household_id)
         df = ch.transform(df)
         #
         csf = ConvertStrFloat('KWH/hh (per half hour) ')
@@ -42,15 +50,10 @@ if __name__ == '__main__':
         #
         ets = ExtractTimeSeries(datetime_col='DateTime', yt_col='KWH/hh (per half hour) ')
         df = ets.transform(df)
-        #
-        '''show_days_details(df)
-        print
-        print 'Above results are for the household_id: {}'.format(household)'''
-
         print
         print '## Saving Data'
         print
-        path_to_clean_data = '../clean_data/'+household+'.csv'
+        path_to_clean_data = '../clean_data/'+household_id+'.csv'
         df.to_csv(path_to_clean_data)
         print 'Clean data saved in: {}'.format(path_to_clean_data)
         print

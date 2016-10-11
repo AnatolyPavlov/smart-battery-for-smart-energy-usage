@@ -11,15 +11,43 @@ from statsmodels.tsa.arima_process import arma_generate_sample
 
 class TimeSeriesDataSplit(object):
 
-    def __init__(self, train_set_final_date):
-        self.train_set_final_date = train_set_final_date
+    def __init__(self, test_set_first_date):
+        '''INPUT: last date in training data subset.
+        The type and format of date should be: str, yyyy-mm-dd
+        for example: '2013-06-21' '''
+        self.test_set_first_date = pd.to_datetime(test_set_first_date)
+        self.test_set_first_date = self.test_set_first_date.date()
 
     def train_test_split(self, df):
-        pass
+        df_train = df.query('index < @self.test_set_first_date')
+        df_test = df.query('index >= @self.test_set_first_date')
+        return df_train, df_test
 
 
 if __name__ == '__main__':
     path_to_clean_data = sys.argv[1]
+    print
+    print '## Loading Postprocessed Data'
+    print
     df = pd.read_csv(path_to_clean_data)
-    tsds = TimeSeriesDataSplit()
-    tsds.train_test_split(df)
+    cols = df.columns
+    #
+    df[cols[0]] = pd.Series(pd.to_datetime(df[cols[0]]),\
+    index=df.index)
+    df = pd.DataFrame(df[cols[1]].values, columns=[cols[1]],\
+    index=df[cols[0]].values)
+    #
+    print
+    print '## Splitting Data into Train and Test Subsets'
+    print
+    tsds = TimeSeriesDataSplit('2013-06-22')
+    df_train, df_test = tsds.train_test_split(df)
+    print
+    print 'Training data set'
+    print df_train.head()
+    print df_train.tail()
+    print
+    print 'Test data set'
+    print df_test.head()
+    print df_test.tail()
+    print
