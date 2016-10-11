@@ -5,6 +5,7 @@ import cPickle as pickle
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from datetime import timedelta
+pd.options.mode.chained_assignment = None
 
 class PredictARMA(object):
     """docstring for ."""
@@ -25,16 +26,20 @@ class PredictARMA(object):
         end_day = start_day + timedelta(days=2)
         self.start_day = str(start_day)
         self.end_day = str(end_day)
-        print 'start_day: ', self.start_day
-        print 'end_day: ', self.end_day
+        print
+        print '## Making predictions for the time span specified below:'
+        print
+        print 'start_day: {}'.format(self.start_day)
+        print 'end_day: {}'.format(self.end_day)
         print
         pred = self.model_unpickled.predict(start=self.start_day, end=self.end_day)
         print
         print '## Saving Predictions'
         print
-        path_to_pred = 'predictions/pred_'+self.start_day+'_'+self.end_day+'.csv'
+        path_to_pred = '../predictions/pred_'+self.start_day+'_'+self.end_day+'.csv'
         pred.to_csv(path_to_pred)
         print 'Predictions saved into: {}'.format(path_to_pred)
+        print
         return pred
 
     def plot_pred_timeseries(self, df, pred):

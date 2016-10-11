@@ -18,7 +18,6 @@ To run model for testing or predicting: python simple_main.py predict path_to_mo
 
 import sys
 import pandas as pd
-import cPickle as pickle
 import matplotlib.pyplot as plt
 from datetime import timedelta
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
@@ -102,44 +101,15 @@ if __name__ == '__main__':
         cols = df.columns
         ets = ExtractTimeSeries(datetime_col=cols[0], yt_col=cols[1])
         df = ets.transform(df)
-        #
         print
         print '## Splitting Data into Train and Test Subsets'
         print
         tsds = TimeSeriesDataSplit('2012-12-15')
         df_train, df_test = tsds.train_test_split(df)
         print
-        print 'Training data set'
-        print df_train.head()
-        print df_train.tail()
-        print
-        print 'Test data set'
-        print df_test.head()
-        print df_test.tail()
-        print
-        print
-        print '## Saving Train and Test Data'
-        print
-        path_to_train_data = '../clean_data/df_train.csv'
-        path_to_test_data = '../clean_data/df_test.csv'
-        df_train.to_csv(path_to_train_data)
-        df_test.to_csv(path_to_test_data)
-        print 'Train data saved into: {}'.format(path_to_train_data)
-        print 'Test data saved into: {}'.format(path_to_test_data)
-        #
-        print
         print '## Training Model'
         print
         marma = ModelARMA(p=2, q=2, freq='30Min').fit(df_train)
-        #
-        print
-        print '## Saving Model'
-        print
-        class_name = str(marma.__class__).strip("'>").split('.')[-1]
-        model_name = class_name+'.pkl'
-        with open(model_name, 'w') as f:
-            pickle.dump(marma, f)
-        print 'Model saved into the file: {}'.format(model_name)
 #=============================================================================================
     if action == 'predict':
         path_to_model = sys.argv[2]
