@@ -6,14 +6,14 @@ it also saves the model in .pkl file.'''
 ''' To run this module, type in command line the following depending on
 what do you want to do:
 
-To run data preprocessing: python simple_main.py data household_id
+To run data preprocessing: python simple_main.py data <household_id>
 
 To plot ACF and PACF graph to help in chosing p and q parameters to
-train model with, type: python simple_main.py ACF_PACF path_to_clean_data
+train model with, type: python simple_main.py ACF_PACF <path_to_clean_data>
 
-To train model: python simple_main.py model path_to_clean_data
+To train model: python simple_main.py model <path_to_clean_data>
 
-To run model for testing or predicting: python simple_main.py predict path_to_model path_to_test_data
+To run model for testing or predicting: python simple_main.py predict <path_to_model> <path_to_test_data>
 '''
 
 import sys

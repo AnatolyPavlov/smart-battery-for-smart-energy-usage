@@ -36,8 +36,11 @@ class PredictARMA(object):
         print
         print '## Saving Predictions'
         print
+        s = pd.Series(pred.values, index=pred.index)
+        s = pd.DataFrame(s.values, columns=[df.columns[0]], index=s.index)
+        #print s.head()
         path_to_pred = '../predictions/pred_'+self.start_day+'_'+self.end_day+'.csv'
-        pred.to_csv(path_to_pred)
+        s.to_csv(path_to_pred)
         print 'Predictions saved into: {}'.format(path_to_pred)
         print
         return pred
