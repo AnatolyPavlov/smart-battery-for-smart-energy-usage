@@ -8,6 +8,7 @@ import sys
 from datetime import timedelta
 
 # Custom Modules:
+from auxiliary_functions import print_process
 from simple_data_preprocessing import ChooseHousehold
 
 def show_households(df):
@@ -27,12 +28,12 @@ def show_days_details(df, datetime_col):#, day_index=0):
         if datetime.date() not in days:
             days.append(datetime.date())
 
-    print 'Printing all days for this household:'
+    '''print 'Printing all days for this household:'
     print
     for i, day in enumerate(days):
         next_day = day + timedelta(days=1)
         df_day = df[(datetimes >= day) & (datetimes < next_day)]
-        print '{}, {}, {}'.format(i, day, len(df_day))
+        print '{}, {}, {}'.format(i, day, len(df_day))'''
     print
     print 'Total number of days for this household: {}'.format(len(days))
     print
@@ -51,9 +52,8 @@ def main():
     '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_1.csv'
     path_data2 =\
     '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_2.csv'
-    print
-    print '## Loading Data'
-    print
+    
+    print_process('Loading Data')
     df = pd.read_csv(path_data)
     #
     households = show_households(df)

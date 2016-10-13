@@ -106,7 +106,7 @@ def main():
     price = pd.DataFrame(price.values, columns=[price.columns[0]], index=demand.index)
     #plot(demand, price)
     #
-    mdb = MinimizeDailyBill(battery_capacity=5, efficiency=0.8, charging_rate=0.25)
+    mdb = MinimizeDailyBill(battery_capacity=0.5, efficiency=0.8, charging_rate=0.25)
     battery = mdb.fit(demand, price)
     plot(demand, price, battery)
 

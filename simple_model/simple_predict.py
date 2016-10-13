@@ -7,15 +7,18 @@ import matplotlib.pyplot as plt
 from datetime import timedelta
 pd.options.mode.chained_assignment = None
 
+# Custom Modules:
+from auxiliary_functions import print_process
+
 class PredictARMA(object):
     """docstring for ."""
-    def __init__(self, path_to_model):
-        self.path_to_model = path_to_model
+    def __init__(self, household_id, model_name):
+        self.household_id = household_id
+        self.model_name = model_name
         self.model_unpickled = None
-        with open(self.path_to_model) as f_un:
-            print
-            print '## Loading Model'
-            print
+        path_to_model = '../saved_models/'+self.household_id+'_'+self.model_name+'.pkl'
+        with open(path_to_model) as f_un:
+            print_process('Loading Model')
             self.model_unpickled = pickle.load(f_un)
         #
         self.start_day = None
@@ -26,20 +29,16 @@ class PredictARMA(object):
         end_day = start_day + timedelta(days=2)
         self.start_day = str(start_day)
         self.end_day = str(end_day)
-        print
-        print '## Making predictions for the time span specified below:'
-        print
+        print_process('Making predictions for the time span specified below:')
         print 'start_day: {}'.format(self.start_day)
         print 'end_day: {}'.format(self.end_day)
         print
         pred = self.model_unpickled.predict(start=self.start_day, end=self.end_day)
-        print
-        print '## Saving Predictions'
-        print
+        print_process('Saving Predictions:')
         s = pd.Series(pred.values, index=pred.index)
         s = pd.DataFrame(s.values, columns=[df.columns[0]], index=s.index)
-        #print s.head()
-        path_to_pred = '../predictions/pred_'+self.start_day+'_'+self.end_day+'.csv'
+        path_to_pred = \
+        '../predictions/'+self.household_id+'_'+self.model_name+'_'+self.start_day+'_'+self.end_day+'.csv'
         s.to_csv(path_to_pred)
         print 'Predictions saved into: {}'.format(path_to_pred)
         print
