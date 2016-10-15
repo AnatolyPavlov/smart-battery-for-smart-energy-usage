@@ -14,16 +14,21 @@ from auxiliary_functions import print_process
 
 class TimeSeriesDataSplit(object):
 
-    def __init__(self, household_id, test_set_first_date):
-        '''INPUT: last date in training data subset.
-        The type and format of date should be: str, yyyy-mm-dd
-        for example: '2013-06-22' '''
-        self.test_set_first_date = pd.to_datetime(test_set_first_date)
-        self.test_set_first_date = self.test_set_first_date.date()
-        #
+    def __init__(self, household_id, train_days):
+        self.train_days = train_days
         self.household_id = household_id
 
     def train_test_split(self, df):
+        if self.train_days < 1:
+            print 'There must be at least one day in training set!'
+            return
+        days = []
+        for i, datetime in enumerate(df.index):
+            if datetime.date() not in days:
+                days.append(datetime.date())
+        print '{}th day: {}'.format(self.train_days, days[self.train_days-1])
+        self.test_set_first_date = days[self.train_days]
+        #
         df_train = df.query('index < @self.test_set_first_date')
         df_test = df.query('index >= @self.test_set_first_date')
         print
@@ -45,15 +50,16 @@ class TimeSeriesDataSplit(object):
 
 class ModelARMA(object):
 
-    def __init__(self, household_id, p, q, freq=None):
+    def __init__(self, household_id, p, q, trend, freq=None):
         self.household_id = household_id
         self.p = p
         self.q = q
+        self.trend = trend
         self.freq = freq
 
     def fit(self, df_train):
         model = sm.tsa.ARMA(df_train, order=(self.p, self.q), freq=self.freq)
-        model_res = model.fit(trend='c',disp=-1)
+        model_res = model.fit(trend=self.trend, disp=-1)
         #
         print_process('Producing Summary of the Model')
         print model_res.summary()

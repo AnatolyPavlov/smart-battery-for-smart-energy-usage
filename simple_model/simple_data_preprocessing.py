@@ -7,7 +7,6 @@ measurements of the power set as values in a single column in the pd.DataFrame.'
 
 import pandas as pd
 from datetime import timedelta
-#from collections import Counter
 pd.options.mode.chained_assignment = None
 
 class ChooseHousehold(object):

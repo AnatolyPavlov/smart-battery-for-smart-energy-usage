@@ -19,9 +19,10 @@ python simple_main.py predict <household_id> <model_name>
 
 import sys
 import pandas as pd
+import numpy as np
+import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from datetime import timedelta
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 # Custom Modules:
 from auxiliary_functions import print_process, plot_acf_pacf
@@ -30,6 +31,7 @@ CleanData, ExtractTimeSeries
 
 from simple_model_arma import TimeSeriesDataSplit, ModelARMA
 from simple_predict import PredictARMA
+from model_arma import EnsembleARMA, PriceCorrARMA
 
 
 if __name__ == '__main__':
@@ -74,27 +76,27 @@ if __name__ == '__main__':
     if action == 'ACF_PACF':
         path_to_clean_data = '../clean_data/'+household_id+'.csv'
         print_process('Loading Postprocessed Data')
-        df = pd.read_csv(path_to_clean_data)
+        df = pd.read_csv(path_to_clean_data, parse_dates=True, index_col='Unnamed: 0')
         #
-        cols = df.columns
-        ets = ExtractTimeSeries(datetime_col=cols[0], yt_col=cols[1])
-        df = ets.transform(df)
         plot_acf_pacf(df, 24)
 #=============================================================================================
     if action == 'model':
         path_to_clean_data = '../clean_data/'+household_id+'.csv'
         print_process('Loading Postprocessed Data')
-        df = pd.read_csv(path_to_clean_data)
+        df = pd.read_csv(path_to_clean_data, parse_dates=True, index_col='Unnamed: 0')
         #
-        cols = df.columns
-        ets = ExtractTimeSeries(datetime_col=cols[0], yt_col=cols[1])
-        df = ets.transform(df)
         print_process('Splitting Data into Train and Test Subsets')
-        tsds = TimeSeriesDataSplit(household_id=household_id, test_set_first_date='2012-12-15')
+        tsds = TimeSeriesDataSplit(household_id=household_id, train_days=10)
         df_train, df_test = tsds.train_test_split(df)
         #
         print_process('Training Model')
-        marma = ModelARMA(household_id=household_id, p=2, q=2, freq='30Min').fit(df_train)
+        earma = EnsembleARMA(household_id=household_id, p=1, q=1)
+        earma.fit(df_train)
+        pred = earma.predict(df_test)
+        #marma = ModelARMA(household_id=household_id, p=4, q=3, trend='nc', freq='30Min').fit(df_train)
+        pcarma = PriceCorrARMA(price_file_name='price_data_London', household_id=household_id, p=1, q=1)
+        pcarma.fit(df_train)
+        pred2 = pcarma.predict(df_test)
 #=============================================================================================
     if action == 'predict':
         model_name = sys.argv[3]
@@ -102,11 +104,7 @@ if __name__ == '__main__':
         path_to_model = '../saved_models/'+household_id+'_'+model_name+'.pkl'
         #path_to_train_data = sys.argv[4]
         print_process('Loading Test Data')
-        df_test = pd.read_csv(path_to_test_data)
-        #
-        cols = df_test.columns
-        ets = ExtractTimeSeries(datetime_col=cols[0], yt_col=cols[1])
-        df_test = ets.transform(df_test)
+        df_test = pd.read_csv(path_to_test_data, parse_dates=True, index_col='Unnamed: 0')
         #
         parma = PredictARMA(household_id=household_id, model_name=model_name)
         y_pred = parma.predict(df_test)

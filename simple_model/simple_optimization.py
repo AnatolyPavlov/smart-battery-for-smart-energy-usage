@@ -101,7 +101,7 @@ def main():
     print '## Loading Demand and Pricing Data'
     print
     demand = pd.read_csv(path_to_demand, parse_dates=True, index_col='Unnamed: 0')
-    demand = demand[:'2012-12-14 23:30:00']
+    #demand = demand[:'2012-12-14 23:30:00']
     price = pd.read_csv(path_to_price, parse_dates=True, index_col='Unnamed: 0')
     price = pd.DataFrame(price.values, columns=[price.columns[0]], index=demand.index)
     #plot(demand, price)
