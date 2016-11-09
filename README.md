@@ -45,7 +45,9 @@ The particular type of time series of households energy demand have pretty disti
 
 I also made an option to allow training of model for weekdays and weekends separately, which showed to yield better results. I developed two models, in the first model I used existing day split in the data into 48 time intervals, thus this model consists of 48 sub-models. The second model splits day into a number of intervals equal to the number of the time intervals in the pricing curve provided by the power generating company. Then I calculate average energy demand within each of these time interval and train models to predict average time demand for each time interval of the future day. Since there are 3 time intervals in the London pricing curve, the second model consists of 3 sub-models. Below are the plots of each of the models performance for the same household. The first is Hourly ARMA 48 sub-models model and the second is Price Correlated ARMA 3 sub-models model:
 ![MAC000002_Model48weekdays](https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/img/fig2a.png)
+
 Weekdays 48 sub-models model forecast for one day. The model was trained on 350 days.
 
 ![MAC000002_Model3weekdays](https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/img/fig5a.png)
+
 Weekdays 3 sub-models model forecast for one day. The model was trained on 350 days.
