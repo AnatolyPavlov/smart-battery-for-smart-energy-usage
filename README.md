@@ -47,8 +47,15 @@ The particular type of time series of households energy demand has a very distin
 I also made an option to allow for training of the model for weekdays and weekends separately, which yielded better results. I developed two models, in the first model I used existing day split in the data into 48 time intervals, thus this model consists of 48 sub-models. The second model splits the day into a number of time intervals equal to the number of time intervals in the pricing curve provided by the power generating company. Then I calculate average energy demand within each of these time intervals and trained the models to predict average energy demand for each time interval for the future day. Since there are 3 time intervals in the London pricing curve, the second model consists of 3 sub-models. Below are the plots of each of the models performance for the same household. The first model is Hourly ARMA 48 sub-models and the second model is Price Correlated ARMA 3 sub-models:
 ![MAC000002_Model48weekdays](https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/img/fig2a.png)
 
-Weekdays 48 sub-models forecast for one day. The model was trained on 350 days. The scores for this model are: $$MSE = 0.0108$$ and $$R^2 = 0.7405$$
+*Fig.1. Weekdays 48 sub-models forecast for one day. The model was trained on 350 days. The scores for this model are: MSE = 0.0108 and R^2 = 0.7405*
 
 ![MAC000002_Model3weekdays](https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/img/fig5a.png)
 
-Weekdays 3 sub-models forecast for one day. The model was trained on 350 days. The scores for this model are: $$MSE = 0.0023$$ and $$R^2 = 0.8527$$
+*Fig.2. Weekdays 3 sub-models forecast for one day. The model was trained on 350 days. The scores for this model are: MSE = 0.0023 and R^2 = 0.8527*
+
+## Optimization
+
+The objective is to predict for each time interval how mach energy the battery pack should charge from the grid or discharge to power household appliances or standby with its current energy content. Mathematically this problem expresses as:
+
+* $$b_{i} = p_{i}(g_{i} + c_{i} - a_{i})$$
+* min{\Sigma b_{i}}
