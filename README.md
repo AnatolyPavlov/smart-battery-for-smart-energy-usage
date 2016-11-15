@@ -58,6 +58,6 @@ I also made an option to allow for training of the model for weekdays and weeken
 The objective is to predict for each time interval how mach energy the battery pack should charge from the grid or discharge to power household appliances or standby with its current energy content. Mathematically this problem expresses as:
 <p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/interval_bill.png" height="50" width="250"> </p>
 
-<p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/min_daily_bill.png" height="60" width="150"> </p>
+<p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/min_daily_bill.png" height="70" width="160"> </p>
 
 where <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/bi.png" height="20" width="20"> is the bill for the time interval *i* and *N* is number of time intervals in a day.
