@@ -56,5 +56,6 @@ I also made an option to allow for training of the model for weekdays and weeken
 ## Optimization
 
 The objective is to predict for each time interval how mach energy the battery pack should charge from the grid or discharge to power household appliances or standby with its current energy content. Mathematically this problem expresses as:
+<center>Centered text</center>
 
 <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/daily_bill.png" height="30" width="145">
