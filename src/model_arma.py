@@ -13,9 +13,11 @@ from auxiliary_functions import plot_pred_test
 
 class HourlyARMA(object):
 
-    def __init__(self, household_id, part_of_week):
+    def __init__(self, household_id, part_of_week, train_days):
         self.household_id = household_id
         self.part_of_week = part_of_week
+        self.train_days = train_days
+        #
         self.p = 7
         self.q = 7
         if self.part_of_week == 'weekdays':
@@ -61,7 +63,7 @@ class HourlyARMA(object):
         next_day = day_to_pred + timedelta(days=1)
         df_test_day = df.query('index >= @day_to_pred and index < @next_day')
         path_to_test =\
-        '../predictions/'+self.household_id+'_test_'+self.part_of_week+'_'+str(day_to_pred)+'.csv'
+        '../predictions/'+self.household_id+'_test_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
         df_test_day.to_csv(path_to_test)
         self.path_to_test = path_to_test
         #
@@ -73,24 +75,26 @@ class HourlyARMA(object):
         print
         #
         path_to_pred = \
-        '../predictions/'+self.household_id+'_HourlyARMA_'+self.part_of_week+'_'+str(day_to_pred)+'.csv'
+        '../predictions/'+self.household_id+'_HourlyARMA_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
         self.df_pred.to_csv(path_to_pred)
         self.path_to_pred = path_to_pred
-        print '------------------------------------------------------------------------------'
         print 'Predictions saved into: {}'.format(path_to_pred)
         print
-        print 'To run optimization for prediction of HourlyARMA model type in command line:'
-        print 'python optimization.py {} <path_to_price>'.format(path_to_pred)
+        print 'To run optimization.py on predictions of HourlyARMA model use the following:'
+        print 'household_id: {}, part of week: {}, number of train days: {}'\
+        .format(self.household_id, self.part_of_week, self.train_days)
+        print '-----------------------------------------------------------------------------------'
         #
-        plot_pred_test(df_test_day, self.df_pred, day_to_pred, 'HourlyARMA')
+        plot_pred_test(df_test_day, self.df_pred, day_to_pred, 'HourlyARMA', self.part_of_week, self.household_id, str(self.train_days))
 
 class PriceCorrARMA(object):
 
-    def __init__(self, price_file_name, household_id, part_of_week):
-        self.path_to_price = '../clean_data/'+price_file_name+'.csv'
+    def __init__(self, price_file_name, household_id, part_of_week, train_days):
         self.price_file_name = price_file_name
         self.household_id = household_id
         self.part_of_week = part_of_week
+        self.train_days = train_days
+        #
         self.p = 8
         self.q = 8
         if self.part_of_week == 'weekdays':
@@ -119,7 +123,7 @@ class PriceCorrARMA(object):
         next_day = day_to_pred + timedelta(days=1)
         self.df_test_day = df_test.query('index >= @day_to_pred and index < @next_day')
         path_to_test =\
-        '../predictions/'+self.household_id+'_test_'+self.part_of_week+'_'+str(day_to_pred)+'.csv'
+        '../predictions/'+self.household_id+'_test_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
         self.df_test_day.to_csv(path_to_test)
         self.path_to_test = path_to_test
         #
@@ -166,13 +170,14 @@ class PriceCorrARMA(object):
         print
         #
         path_to_pred = \
-        '../predictions/'+self.household_id+'_PriceCorrARMA_'+self.part_of_week+'_'+str(day_to_pred)+'.csv'
+        '../predictions/'+self.household_id+'_PriceCorrARMA_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
         self.df_pred.to_csv(path_to_pred)
         self.path_to_pred = path_to_pred
-        print '------------------------------------------------------------------------------'
         print 'Predictions saved into: {}'.format(path_to_pred)
         print
-        print 'To run optimization for prediction of PriceCorrARMA model type in command line:'
-        print 'python optimization.py {} {}'.format(path_to_pred, self.path_to_price)
+        print 'To run optimization.py on predictions of PriceCorrARMA model use the following:'
+        print 'household_id: {}, part of week: {}, number of train days: {}, price file name: {}'\
+        .format(self.household_id, self.part_of_week, self.train_days, self.price_file_name)
+        print '-----------------------------------------------------------------------------------'
         #
-        plot_pred_test(self.df_test_day, self.df_pred, day_to_pred, 'PriceCorrARMA')
+        plot_pred_test(self.df_test_day, self.df_pred, day_to_pred, 'PriceCorrARMA', self.part_of_week, self.household_id, str(self.train_days))

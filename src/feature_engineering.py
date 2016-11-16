@@ -7,16 +7,49 @@ from datetime import timedelta
 # Custom Modules:
 from auxiliary_functions import print_process
 
+class SplitWeek(object):
+    '''This class splits time series data
+    into two subsets grouped by weekday and weekend.'''
+
+    def __init__(self):
+        self.part_of_week = None
+
+    def transform(self, df):
+        temp = pd.DatetimeIndex(df.index)
+        df['weekday'] = temp.weekday
+        df_weekdays = df[df['weekday'] <= 4].drop('weekday', axis=1)
+        df_weekends = df[df['weekday'] > 4].drop('weekday', axis=1)
+        print 'weekdays: {}, weekends: {}'.format(len(df_weekdays)/48, len(df_weekends)/48)
+        print
+        print 'Please enter a key word to specify what data to use to train model.'
+        self.part_of_week =\
+        raw_input('Enter: weekdays/weekends or press any key to train on entire data set: ')
+        #
+        if self.part_of_week == 'weekdays':
+            print
+            print 'Selected weekdays only'
+            return df_weekdays
+        elif self.part_of_week == 'weekends':
+            print
+            print 'Selected weekends only'
+            return df_weekends
+        else:
+            print
+            print 'Selected all days of week'
+            return df.drop('weekday', axis=1)
+
+
 class TimeSeriesDataSplit(object):
 
-    def __init__(self, household_id, train_days):
-        self.train_days = train_days
+    def __init__(self, household_id, part_of_week, train_days):
         self.household_id = household_id
+        self.part_of_week = part_of_week
+        self.train_days = train_days
+        if self.train_days < 10:
+            print 'There must be at least 10 days in training set!'
+            return
 
     def train_test_split(self, df):
-        if self.train_days < 1:
-            print 'There must be at least one day in training set!'
-            return
         days = []
         for i, datetime in enumerate(df.index):
             if datetime.date() not in days:
@@ -35,44 +68,14 @@ class TimeSeriesDataSplit(object):
         print df_test.head()
         print df_test.tail()
         print_process('Saving Train and Test Data')
-        path_to_train_data = '../clean_data/'+self.household_id+'_train.csv'
-        path_to_test_data = '../clean_data/'+self.household_id+'_test.csv'
+        path_to_train_data = '../clean_data/'+self.household_id+'_train_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
+        path_to_test_data = '../clean_data/'+self.household_id+'_test_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
         df_train.to_csv(path_to_train_data)
         df_test.to_csv(path_to_test_data)
         print 'Train data saved into: {}'.format(path_to_train_data)
         print 'Test data saved into: {}'.format(path_to_test_data)
         return df_train, df_test
 
-class SplitWeek(object):
-    '''This class splits time series data
-    into two subsets grouped by weekday and weekend.'''
-
-    def __init__(self):
-        self.part_of_week = None
-
-    def transform(self, df):
-        temp = pd.DatetimeIndex(df.index)
-        df['weekday'] = temp.weekday
-        df_weekdays = df[df['weekday'] <= 4].drop('weekday', axis=1)
-        df_weekends = df[df['weekday'] > 4].drop('weekday', axis=1)
-        print 'weekdays: {}, weekends: {}'.format(len(df_weekdays)/48, len(df_weekends)/48)
-        print
-        print 'Please enter a key word to specify what data to use to train model.'
-        self.part_of_week =\
-        raw_input("Enter: weekdays/weekends or press any key to train on entire data set:")
-        #
-        if self.part_of_week == 'weekdays':
-            print
-            print 'Selected weekdays only'
-            return df_weekdays
-        elif self.part_of_week == 'weekends':
-            print
-            print 'Selected weekends only'
-            return df_weekends
-        else:
-            print
-            print 'Selected all days of week'
-            return df.drop('weekday', axis=1)
 
 class ModelsTimeSlices(object):
 

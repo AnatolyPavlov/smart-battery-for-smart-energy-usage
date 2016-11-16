@@ -30,19 +30,22 @@ class MinimizeDailyBill(object):
 
     def fit(self, demand, price):
         p_vec = [-p[0] if i==2 else p[0] for j, p in enumerate(price.values) for i in xrange(3)]
-        A_eq = []
-        b_eq = []
+        A_eq = [[1 if j==2 else 0 for j in xrange(len(p_vec))]] # This is for constraint a_0 = 0
+        b_eq = [0]
         for i, s in enumerate(demand.values):
-            # This loop is for constraint s_i = g_i + a_i
-            A_eq.append([1 if j in [3*i, 3*i+2] else 0 for j in xrange(len(p_vec))])
+            # This is for constraint s_i = g_i
+            A_eq.append([1 if j==3*i else 0 for j in xrange(len(p_vec))])
             b_eq.append(s[0])
 
         A_ub = []
         b_ub = []
-        for i in xrange(len(demand)):
+        for i, s in enumerate(demand.values):
             # This loop is for constraint c_i <= alpha*C
             A_ub.append([1 if j==3*i+1 else 0 for j in xrange(len(p_vec))])
             b_ub.append(self.alpha*self.C)
+            # This is for constraint a_i <= s_i
+            A_ub.append([1 if j==3*i+2 else 0 for j in xrange(len(p_vec))])
+            b_ub.append(s[0])
         #
         triplet = [0, -self.e, 1]
         for i in xrange(len(demand)):
@@ -79,15 +82,20 @@ class MinimizeDailyBill(object):
 
         return pd.DataFrame(self.E, columns=['Battery Charge Level'], index=demand.index)
 
-def run_optimization(path_to_demand, path_to_test, path_to_price):
-    print_process('Loading Demand, Test, and Pricing Data')
-    demand = pd.read_csv(path_to_demand, parse_dates=True, index_col='Unnamed: 0')
+def run_optimization(train_days, price_file_name, model_name, part_of_week, household_id):
+    path_to_pred = '../predictions/'+household_id+'_'+model_name+'_'+part_of_week+'_'+train_days+'.csv'
+    path_to_test = '../predictions/'+household_id+'_test_'+part_of_week+'_'+train_days+'.csv'
+    path_to_price = '../clean_data/'+price_file_name+'.csv'
+    #
+    print_process('Loading Predicted Demand, Test, and Pricing Data')
+    demand = pd.read_csv(path_to_pred, parse_dates=True, index_col='Unnamed: 0')
     test = pd.read_csv(path_to_test, parse_dates=True, index_col='Unnamed: 0')
     test = pd.DataFrame(test.values, columns=[test.columns[0]], index=demand.index)
     price = pd.read_csv(path_to_price, parse_dates=True, index_col='Unnamed: 0')
     price = pd.DataFrame(price.values, columns=[price.columns[0]], index=demand.index)
     #
-    mdb = MinimizeDailyBill(battery_capacity=0.5, efficiency=0.8, charging_rate=0.25)
+    battery_capacity = 2.0
+    mdb = MinimizeDailyBill(battery_capacity, efficiency=0.8, charging_rate=0.25)
     battery = mdb.fit(demand, price)
     daily_bill_w_battery = mdb.daily_bill
     #
@@ -97,27 +105,29 @@ def run_optimization(path_to_demand, path_to_test, path_to_price):
     daily_bill_no_battery = np.dot(test_vec.T, price_vec)[0][0]
     save_per = round(100.0*(daily_bill_no_battery-daily_bill_w_battery)/daily_bill_no_battery, 1)
     print
-    print 'Daily Bill with no Battery: {} (UK Pounds)'.format(daily_bill_no_battery)
+    print 'Daily Bill with no Battery: {}'.format(daily_bill_no_battery)
     print
-    print 'Daily Bill with Battery: {} (UK Pounds)'.format(daily_bill_w_battery)
+    print 'Daily Bill with Battery: {}'.format(daily_bill_w_battery)
     print
     print 'Savings: {}%'.format(save_per)
     #
     day_to_pred = demand.index[0].date()
-    plot_results(demand, price, battery, day_to_pred)
+    plot_results(demand, price, battery, day_to_pred, model_name, part_of_week, household_id, train_days, battery_capacity)
 
 
 def main():
-    path_to_demand = sys.argv[1]
-    path_to_price = sys.argv[2]
-    print_process('Loading Demand and Pricing Data')
-    demand = pd.read_csv(path_to_demand, parse_dates=True, index_col='Unnamed: 0')
-    price = pd.read_csv(path_to_price, parse_dates=True, index_col='Unnamed: 0')
-    price = pd.DataFrame(price.values, columns=[price.columns[0]], index=demand.index)
+    print
+    household_id = raw_input('Enter household_id: ')
+    print
+    model_name = raw_input('Enter model_name: ')
+    print
+    part_of_week = raw_input('Enter part of week: ')
+    print
+    train_days = raw_input('Enter number of training days: ')
+    print
+    price_file_name = raw_input('Enter price file name without extention: ')
     #
-    mdb = MinimizeDailyBill(battery_capacity=0.5, efficiency=0.8, charging_rate=0.25)
-    battery = mdb.fit(demand, price)
-    plot_results(demand, price, battery)
+    run_optimization(train_days, price_file_name, model_name, part_of_week, household_id)
 
 if __name__ == '__main__':
     main()
