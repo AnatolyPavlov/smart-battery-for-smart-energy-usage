@@ -83,8 +83,8 @@ The Eqs.(1)-(7) define a [linear programming](https://en.wikipedia.org/wiki/Line
 Below are the solutions of the Eq.(8) shown in the graph for the battery pack charging-standby-discharging cycles for the same household whose predictions of the energy demand obtained with two different models were shown in Fig.1 and Fig.2 above.
 ![MAC000002_Model48weekdays_battery](https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/img/fig3a.png)
 
-*Fig.3. Forecast of the battery pack charging-standby-discharging cycles for one day. This forecast based on predictions of demand (green line) obtained from weekdays 48 sub-models and provided pricing (black line). The projected savings on electric bill for this day is 29.8%.*
+*Fig.3. Forecast of the battery pack charging-standby-discharging cycles (solid red line) for one day. This forecast based on predictions of demand (green line) obtained from weekdays 48 sub-models and provided pricing (black line). The projected savings on electric bill with the 2 kWh battery (dashed red line) for this day is 29.8%.*
 
 ![MAC000002_Model3weekdays_battery](https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/img/fig5b.png)
 
-*Fig.4. Forecast of the battery pack charging-standby-discharging cycles for one day. This forecast based on predictions of demand (green line) obtained from weekdays 3 sub-models and provided pricing (black line). The projected savings on electric bill for this day is 31.0%.*
+*Fig.4. Forecast of the battery pack charging-standby-discharging cycles (solid red line) for one day. This forecast based on predictions of demand (green line) obtained from weekdays 3 sub-models and provided pricing (black line). The projected savings on electric bill with the 2 kWh battery (dashed red line) for this day is 31.0%.*
