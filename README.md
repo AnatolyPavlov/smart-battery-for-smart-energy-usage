@@ -93,3 +93,5 @@ Despite the fact that for this particular household the Price Correlated Model p
 <p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/img/fig4.png" height="400" width="600"> </p>
 
 *Fig.5. Forecast of potential savings for one day as a function of battery capacity for a particular household. It shows that increase in battery capacity leads to increase in savings on daily electric bill until battery capacity reaches a plato in savings beyond which increase in battery capacity does not result in significant increase in savings.*
+
+The calculations presented in Fig.5 can be used to estimate the maximal size of the battery pack for a household based on its energy usage history and a particular pricing offered by a power company.
