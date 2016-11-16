@@ -72,3 +72,5 @@ The Eq.(2) is the subject to the following constraints:
 <p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/discharge_less_charge.png" height="75" width="250"> </p>
 
 <p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/no_overcharge.png" height="75" width="280"> </p>
+
+Here constants <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/alpha.png" height="20" width="15">, *C*, and *e* are charging rate, battery capacity, and efficiency for a roundtrip of charge-discharge combined with AC-DC conversion respectively. The Eqs.(3) and (5) simply state that amount of energy the battery pack can charge and discharge is not negative. The Eq.(4) restricts how much energy can battery charge in a single time interval. Finally, Eqs.(6)-(7) imply that total amount of discharge over a number of previous time intervals cannot exceed amount of energy the battery has charged for the same number of preceding time intervals.
