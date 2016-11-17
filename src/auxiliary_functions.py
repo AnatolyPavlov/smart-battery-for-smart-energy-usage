@@ -40,3 +40,15 @@ def plot_results(demand, price, battery, day_to_pred, model_name, part_of_week, 
     plt.title('Phases of the battery operation for: {}'.format(str(day_to_pred)), fontsize=15)
     plt.savefig('../img/'+household_id+'_'+model_name+'_'+part_of_week+'_'+train_days+'_'+'battery.png')
     plt.show()
+
+def plot_battery_savings (battery_capacities, savings, day_to_pred, model_name, part_of_week, household_id, train_days):
+    '''INPUT: list, list, string, string, string, string
+        OUTPUT: None
+        Saves figure with the plot of battery_capacities vs. savings.'''
+    plt.plot(battery_capacities, savings, color='r')
+    plt.grid(b=True, which='major', color='b', linestyle='--')
+    plt.xlabel('Battery Capacity (kWh)', fontsize=15)
+    plt.ylabel('Daily savings (%)', fontsize=15)
+    plt.title('Savings as a function of battery capacity for: {}'.format(str(day_to_pred)), fontsize=15)
+    plt.savefig('../img/'+household_id+'_'+model_name+'_'+part_of_week+'_'+train_days+'battery_savings.png')
+    plt.show()

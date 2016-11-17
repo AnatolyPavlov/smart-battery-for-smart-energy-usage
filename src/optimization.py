@@ -3,7 +3,7 @@ sequence of charge - discharge cycles and how much energy the battery should cha
 or discharge at every time interval in the cycle.
 
 To run this module type in command line:
-python optimization.py <path_to_demand> <path_to_price>"""
+python optimization.py"""
 
 import sys
 import pandas as pd
@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import linprog
 
 # Custom Modules:
-from auxiliary_functions import plot_results, print_process
+from auxiliary_functions import plot_results, print_process, plot_battery_savings
 
 class MinimizeDailyBill(object):
 
@@ -30,10 +30,10 @@ class MinimizeDailyBill(object):
 
     def fit(self, demand, price):
         p_vec = [-p[0] if i==2 else p[0] for j, p in enumerate(price.values) for i in xrange(3)]
-        A_eq = [[1 if j==2 else 0 for j in xrange(len(p_vec))]] # This is for constraint a_0 = 0
+        A_eq = [[1 if j==2 else 0 for j in xrange(len(p_vec))]] # This is initial condition a_0 = 0
         b_eq = [0]
         for i, s in enumerate(demand.values):
-            # This is for constraint s_i = g_i
+            # This is for constraint g_i = s_i
             A_eq.append([1 if j==3*i else 0 for j in xrange(len(p_vec))])
             b_eq.append(s[0])
 
@@ -43,7 +43,7 @@ class MinimizeDailyBill(object):
             # This loop is for constraint c_i <= alpha*C
             A_ub.append([1 if j==3*i+1 else 0 for j in xrange(len(p_vec))])
             b_ub.append(self.alpha*self.C)
-            # This is for constraint a_i <= s_i
+            # This is for constraint a_i <= s_i same as a_i <= g_i
             A_ub.append([1 if j==3*i+2 else 0 for j in xrange(len(p_vec))])
             b_ub.append(s[0])
         #
@@ -94,25 +94,46 @@ def run_optimization(train_days, price_file_name, model_name, part_of_week, hous
     price = pd.read_csv(path_to_price, parse_dates=True, index_col='Unnamed: 0')
     price = pd.DataFrame(price.values, columns=[price.columns[0]], index=demand.index)
     #
-    battery_capacity = 2.0
-    mdb = MinimizeDailyBill(battery_capacity, efficiency=0.8, charging_rate=0.25)
-    battery = mdb.fit(demand, price)
-    daily_bill_w_battery = mdb.daily_bill
+    print
+    print 'Optimization runs for a number of battery capacities. Enter below step and max battery capacity:'
+    print
+    battery_capacity_interval = float(raw_input('Enter step between battery capacities: '))
+    print
+    battery_capacity_max =\
+    int(raw_input('Max of battery capacity is multiple of the steps max=N*step. Enter N (int): '))*battery_capacity_interval
+    print
+    efficiency = float(raw_input('Enter efficiency of the battery pack system: '))
+    print
+    charging_rate = float(raw_input('Enter charging rate of the battery pack for a time interval the day is split into: '))
     #
-    ''' Computation of daily bill if there were no battery'''
-    test_vec = np.array(test.values)
-    price_vec = np.array(price.values)
-    daily_bill_no_battery = np.dot(test_vec.T, price_vec)[0][0]
-    save_per = round(100.0*(daily_bill_no_battery-daily_bill_w_battery)/daily_bill_no_battery, 1)
-    print
-    print 'Daily Bill with no Battery: {}'.format(daily_bill_no_battery)
-    print
-    print 'Daily Bill with Battery: {}'.format(daily_bill_w_battery)
-    print
-    print 'Savings: {}%'.format(save_per)
+    savings = []
+    battery_capacities = np.arange(battery_capacity_interval, battery_capacity_max+battery_capacity_interval, battery_capacity_interval)
+    batteries = {}
+    #
+    for battery_capacity in battery_capacities:
+        mdb = MinimizeDailyBill(battery_capacity, efficiency, charging_rate)
+        battery = mdb.fit(demand, price)
+        batteries[battery_capacity] = battery
+        daily_bill_w_battery = mdb.daily_bill
+        #
+        ''' Computation of daily bill if there were no battery'''
+        test_vec = np.array(test.values)
+        price_vec = np.array(price.values)
+        daily_bill_no_battery = np.dot(test_vec.T, price_vec)[0][0]
+        saving = round(100.0*(daily_bill_no_battery-daily_bill_w_battery)/daily_bill_no_battery, 2)
+        savings.append(saving)
+        print '|==============================================================|'
+        print 'Daily Bill with no Battery: {}'.format(daily_bill_no_battery)
+        print
+        print 'Daily Bill with Battery: {}'.format(daily_bill_w_battery)
+        print
+        print 'Daily Savings: {}% for the battery capacity: {}'.format(saving, battery_capacity)
     #
     day_to_pred = demand.index[0].date()
-    plot_results(demand, price, battery, day_to_pred, model_name, part_of_week, household_id, train_days, battery_capacity)
+    plot_battery_savings(battery_capacities, savings, day_to_pred, model_name, part_of_week, household_id, train_days)
+    print
+    battery_capacity = float(raw_input('Enter battery capacity for wich to plot battery phases of operation: '))
+    plot_results(demand, price, batteries[battery_capacity], day_to_pred, model_name, part_of_week, household_id, train_days, battery_capacity)
 
 
 def main():
