@@ -69,6 +69,8 @@ The Eq.(2) is the subject to the following constraints:
 
 <p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/pos_ai.png" height="35" width="160"> </p>
 
+<p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/ai_less_gi.png" height="35" width="160"> </p>
+
 <p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/discharge_less_charge.png" height="75" width="250"> </p>
 
 <p align="center"> <img src="https://github.com/AnatolyPavlov/smart-battery-for-smart-energy-usage/blob/master/equations/no_overcharge.png" height="75" width="280"> </p>
