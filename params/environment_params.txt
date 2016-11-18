@@ -1,0 +1,2 @@
+household_id   model_name      part_of_week   train_days   price_file_name
+MAC000002      PriceCorrARMA     weekdays        349       price_data_London

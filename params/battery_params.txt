@@ -1,0 +1,2 @@
+battery_capacity_interval  battery_capacity_multiple  efficiency  charging_rate
+          0.5                        20                  0.8          0.25

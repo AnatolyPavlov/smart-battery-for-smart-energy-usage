@@ -11,8 +11,8 @@ class SplitWeek(object):
     '''This class splits time series data
     into two subsets grouped by weekday and weekend.'''
 
-    def __init__(self):
-        self.part_of_week = None
+    def __init__(self, environment_params):
+        self.environment_params = environment_params
 
     def transform(self, df):
         temp = pd.DatetimeIndex(df.index)
@@ -21,15 +21,13 @@ class SplitWeek(object):
         df_weekends = df[df['weekday'] > 4].drop('weekday', axis=1)
         print 'weekdays: {}, weekends: {}'.format(len(df_weekdays)/48, len(df_weekends)/48)
         print
-        print 'Please enter a key word to specify what data to use to train model.'
-        self.part_of_week =\
-        raw_input('Enter: weekdays/weekends or press any key to train on entire data set: ')
+        part_of_week = self.environment_params['part_of_week'].values[0]
         #
-        if self.part_of_week == 'weekdays':
+        if part_of_week == 'weekdays':
             print
             print 'Selected weekdays only'
             return df_weekdays
-        elif self.part_of_week == 'weekends':
+        elif part_of_week == 'weekends':
             print
             print 'Selected weekends only'
             return df_weekends
@@ -41,24 +39,25 @@ class SplitWeek(object):
 
 class TimeSeriesDataSplit(object):
 
-    def __init__(self, household_id, part_of_week, train_days):
-        self.household_id = household_id
-        self.part_of_week = part_of_week
-        self.train_days = train_days
-        if self.train_days < 10:
-            print 'There must be at least 10 days in training set!'
-            return
+    def __init__(self, environment_params):
+        self.environment_params = environment_params
 
     def train_test_split(self, df):
+        household_id = self.environment_params['household_id'].values[0]
+        part_of_week = self.environment_params['part_of_week'].values[0]
+        train_days = self.environment_params['train_days'].values[0]
+        if train_days < 10:
+            print 'There must be at least 10 days in training set!'
+            return
         days = []
         for i, datetime in enumerate(df.index):
             if datetime.date() not in days:
                 days.append(datetime.date())
-        print '{}th day: {}'.format(self.train_days, days[self.train_days-1])
-        self.test_set_first_date = days[self.train_days]
+        print '{}th day: {}'.format(train_days, days[train_days-1])
+        test_set_first_date = days[train_days]
         #
-        df_train = df.query('index < @self.test_set_first_date')
-        df_test = df.query('index >= @self.test_set_first_date')
+        df_train = df.query('index < @test_set_first_date')
+        df_test = df.query('index >= @test_set_first_date')
         print
         print 'Training data set'
         print df_train.head()
@@ -68,8 +67,8 @@ class TimeSeriesDataSplit(object):
         print df_test.head()
         print df_test.tail()
         print_process('Saving Train and Test Data')
-        path_to_train_data = '../clean_data/'+self.household_id+'_train_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
-        path_to_test_data = '../clean_data/'+self.household_id+'_test_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
+        path_to_train_data = '../clean_data/'+household_id+'_train_'+part_of_week+'_'+str(train_days)+'.csv'
+        path_to_test_data = '../clean_data/'+household_id+'_test_'+part_of_week+'_'+str(train_days)+'.csv'
         df_train.to_csv(path_to_train_data)
         df_test.to_csv(path_to_test_data)
         print 'Train data saved into: {}'.format(path_to_train_data)

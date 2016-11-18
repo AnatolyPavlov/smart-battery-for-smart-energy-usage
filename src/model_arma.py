@@ -3,7 +3,6 @@
 
 import pandas as pd
 import pyflux as pf
-import matplotlib.pyplot as plt
 from datetime import timedelta
 from sklearn.metrics import mean_squared_error, r2_score
 
@@ -13,21 +12,9 @@ from auxiliary_functions import plot_pred_test
 
 class HourlyARMA(object):
 
-    def __init__(self, household_id, part_of_week, train_days):
-        self.household_id = household_id
-        self.part_of_week = part_of_week
-        self.train_days = train_days
-        #
-        self.p = 7
-        self.q = 7
-        if self.part_of_week == 'weekdays':
-            self.p = 5
-            self.q = 5
-        elif self.part_of_week == 'weekends':
-            self.p = 2
-            self.q = 2
-        else:
-            self.part_of_week = 'all-days-week'
+    def __init__(self, environment_params):
+        self.environment_params = environment_params
+        self.part_of_week = self.environment_params['part_of_week'].values[0]
         #
         self._models = dict()
         self.df_pred = pd.DataFrame()
@@ -42,13 +29,22 @@ class HourlyARMA(object):
         hours_in_day, houry_sliced_data = mts.transform(df)
         #
         '''Now data ready to be sent for training models for each hourly slice'''
+        p = 7
+        q = 7
+        if self.part_of_week == 'weekdays':
+            p = 5
+            q = 5
+        elif self.part_of_week == 'weekends':
+            p = 2
+            q = 2
+        #
         pred = []
         date = []
         time = []
         day_to_pred = df_test.index[0].date()
         for hour in hours_in_day:
             model=\
-            pf.ARIMA(data=houry_sliced_data[hour], ar=self.p, ma=self.q, target=df.columns[0])
+            pf.ARIMA(data=houry_sliced_data[hour], ar=p, ma=q, target=df.columns[0])
             self._models[hour] = model.fit("MLE")
             pred.append(model.predict(h=1)[df.columns[0]][0])
             date.append(str(day_to_pred))
@@ -59,13 +55,15 @@ class HourlyARMA(object):
         pd.DataFrame(self.df_pred[df.columns[0]].values, columns=[df.columns[0]], index=idx)
 
     def predict(self, df):
+        household_id = self.environment_params['household_id'].values[0]
+        train_days = str(self.environment_params['train_days'].values[0])
+        #
         day_to_pred = df.index[0].date()
         next_day = day_to_pred + timedelta(days=1)
         df_test_day = df.query('index >= @day_to_pred and index < @next_day')
         path_to_test =\
-        '../predictions/'+self.household_id+'_test_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
+        '../predictions/'+household_id+'_test_'+self.part_of_week+'_'+train_days+'.csv'
         df_test_day.to_csv(path_to_test)
-        self.path_to_test = path_to_test
         #
         self._score.append(mean_squared_error(df_test_day.values, self.df_pred.values))
         self._score.append(r2_score(df_test_day.values, self.df_pred.values))
@@ -75,36 +73,25 @@ class HourlyARMA(object):
         print
         #
         path_to_pred = \
-        '../predictions/'+self.household_id+'_HourlyARMA_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
+        '../predictions/'+household_id+'_HourlyARMA_'+self.part_of_week+'_'+train_days+'.csv'
         self.df_pred.to_csv(path_to_pred)
-        self.path_to_pred = path_to_pred
         print 'Predictions saved into: {}'.format(path_to_pred)
         print
-        print 'To run optimization.py on predictions of HourlyARMA model use the following:'
+        print 'The model HourlyARMA was trained for the following set of parameters:'
         print 'household_id: {}, part of week: {}, number of train days: {}'\
-        .format(self.household_id, self.part_of_week, self.train_days)
+        .format(household_id, self.part_of_week, train_days)
         print '-----------------------------------------------------------------------------------'
         #
-        plot_pred_test(df_test_day, self.df_pred, day_to_pred, 'HourlyARMA', self.part_of_week, self.household_id, str(self.train_days))
+        plot_pred_test(df_test_day, self.df_pred, day_to_pred, 'HourlyARMA', self.part_of_week, household_id, train_days)
 
 class PriceCorrARMA(object):
 
-    def __init__(self, price_file_name, household_id, part_of_week, train_days):
-        self.price_file_name = price_file_name
-        self.household_id = household_id
-        self.part_of_week = part_of_week
-        self.train_days = train_days
-        #
-        self.p = 8
-        self.q = 8
-        if self.part_of_week == 'weekdays':
-            self.p = 6
-            self.q = 6
-        elif self.part_of_week == 'weekends':
-            self.p = 3
-            self.q = 3
-        else:
-            self.part_of_week = 'all-days-week'
+    def __init__(self, environment_params):
+        self.environment_params = environment_params
+        self.household_id = self.environment_params['household_id'].values[0]
+        self.part_of_week = self.environment_params['part_of_week'].values[0]
+        self.train_days = str(self.environment_params['train_days'].values[0])
+        self.price_file_name = self.environment_params['price_file_name'].values[0]
         #
         self._models = dict()
         self.df_pred = pd.DataFrame()
@@ -123,17 +110,26 @@ class PriceCorrARMA(object):
         next_day = day_to_pred + timedelta(days=1)
         self.df_test_day = df_test.query('index >= @day_to_pred and index < @next_day')
         path_to_test =\
-        '../predictions/'+self.household_id+'_test_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
+        '../predictions/'+self.household_id+'_test_'+self.part_of_week+'_'+self.train_days+'.csv'
         self.df_test_day.to_csv(path_to_test)
         self.path_to_test = path_to_test
         #
         dummy_test = mcp.transform(self.df_test_day, test_data=True)
         #
         '''Now data ready to be sent for training models for each hourly slice'''
+        p = 8
+        q = 8
+        if self.part_of_week == 'weekdays':
+            p = 6
+            q = 6
+        elif self.part_of_week == 'weekends':
+            p = 3
+            q = 3
+        #
         dummy_pred = {}
         for pr in prices_unique:
             model=\
-            pf.ARIMA(data=data_means_grouped_by_price[pr], ar=self.p, ma=self.q, target=df.columns[0])
+            pf.ARIMA(data=data_means_grouped_by_price[pr], ar=p, ma=q, target=df.columns[0])
             self._models[pr] = model.fit("MLE")
             dummy_pred[pr] = model.predict(h=1)[df.columns[0]][0]
             #
@@ -170,14 +166,14 @@ class PriceCorrARMA(object):
         print
         #
         path_to_pred = \
-        '../predictions/'+self.household_id+'_PriceCorrARMA_'+self.part_of_week+'_'+str(self.train_days)+'.csv'
+        '../predictions/'+self.household_id+'_PriceCorrARMA_'+self.part_of_week+'_'+self.train_days+'.csv'
         self.df_pred.to_csv(path_to_pred)
         self.path_to_pred = path_to_pred
         print 'Predictions saved into: {}'.format(path_to_pred)
         print
-        print 'To run optimization.py on predictions of PriceCorrARMA model use the following:'
+        print 'The model PriceCorrARMA was trained for the following set of parameters:'
         print 'household_id: {}, part of week: {}, number of train days: {}, price file name: {}'\
         .format(self.household_id, self.part_of_week, self.train_days, self.price_file_name)
         print '-----------------------------------------------------------------------------------'
         #
-        plot_pred_test(self.df_test_day, self.df_pred, day_to_pred, 'PriceCorrARMA', self.part_of_week, self.household_id, str(self.train_days))
+        plot_pred_test(self.df_test_day, self.df_pred, day_to_pred, 'PriceCorrARMA', self.part_of_week, self.household_id, self.train_days)

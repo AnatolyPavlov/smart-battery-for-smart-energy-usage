@@ -5,15 +5,14 @@ loads row data and saves post-processed data predictions.'''
 ''' To run this module, type in the command line the following depending on
 what do you want to do:
 
-To run data preprocessing: python main.py data <household_id>
+To run data preprocessing: python main.py data
 
-To train model: python main.py model <household_id>
-To train model and run optimization: python main.py model_opt <household_id>
+To train model: python main.py model
+
+To run optimization: python main.py opt
 '''
-
 import sys
 import pandas as pd
-import numpy as np
 
 # Custom Modules:
 from auxiliary_functions import print_process
@@ -26,12 +25,13 @@ from optimization import run_optimization
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print 'To run code correctly enter in command line:'
         print 'python main.py <action> <household_id>'
     else:
         action = sys.argv[1]
-        household_id = sys.argv[2]
+        environment_params = pd.read_csv('../params/environment_params.txt', delim_whitespace=True)
+        household_id = environment_params['household_id'].values[0]
         if action == 'data':
             path_data =\
             '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_1.csv'
@@ -58,7 +58,7 @@ if __name__ == '__main__':
             path_to_clean_data = '../clean_data/'+household_id+'.csv'
             df.to_csv(path_to_clean_data)
             print 'Clean data saved in: {}'.format(path_to_clean_data)
-            print
+            '''print
             print 'To train model for this particular household type in command line:'
             print 'python main.py model {}'.format(household_id)
             print
@@ -66,39 +66,37 @@ if __name__ == '__main__':
             print 'python main.py model_opt {}'.format(household_id)
             print
             print 'To train model for an other household type in command line:'
-            print 'python main.py model <household_id>'
+            print 'python main.py model <household_id>' '''
             print
 #=============================================================================================
-        if action == 'model' or action == 'model_opt':
+        if action == 'model':
             path_to_clean_data = '../clean_data/'+household_id+'.csv'
             print_process('Loading Postprocessed Data')
             df = pd.read_csv(path_to_clean_data, parse_dates=True, index_col='Unnamed: 0')
             #
             print_process('Engineering Features')
-            sp = SplitWeek()
+            sp = SplitWeek(environment_params)
             df = sp.transform(df)
             #
             print_process('Splitting Data into Train and Test Subsets')
-            train_days = raw_input('Enter number of days to train model on: ')
-            tsds = TimeSeriesDataSplit(household_id, sp.part_of_week, int(train_days))
+            tsds = TimeSeriesDataSplit(environment_params)
             df_train, df_test = tsds.train_test_split(df)
             #
+            #part_of_week = environment_params['part_of_week'].values[0]
+            #train_days = str(environment_params['train_days'].values[0])
+            #
             print_process('Training Hourly ARMA Model')
-            harma = HourlyARMA(household_id, sp.part_of_week, train_days)
+            harma = HourlyARMA(environment_params)
             harma.fit(df_train, df_test)
             harma.predict(df_test)
             #
             print_process('Training Price Correlated ARMA Model')
-            price_file_name = raw_input('Enter price file name without extention: ')
-            pcarma =\
-            PriceCorrARMA(price_file_name, household_id, sp.part_of_week, train_days)
+            #price_file_name = environment_params['price_file_name'].values[0]
+            pcarma =PriceCorrARMA(environment_params)
             pcarma.fit(df_train, df_test)
             pcarma.predict()
-            #
-            if action == 'model_opt':
-                price_file_name = raw_input('Enter price file name without extention: ')
-                print_process('Optimization for HourlyARMA Model Predictions')
-                run_optimization(train_days, price_file_name, 'HourlyARMA', sp.part_of_week, household_id)
-                #
-                print_process('Optimization for PriceCorrARMA Model Predictions')
-                run_optimization(train_days, pcarma.price_file_name, 'PriceCorrARMA', sp.part_of_week, household_id)
+#=============================================================================================
+        if action == 'opt':
+            model_name = environment_params['model_name'].values[0]
+            print_process('Optimization for '+model_name+' Model Predictions')
+            run_optimization(environment_params)
