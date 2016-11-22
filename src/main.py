@@ -20,7 +20,7 @@ from data_preprocessing import ChooseHousehold, ConvertStrFloat,\
 CleanData, ExtractTimeSeries
 
 from feature_engineering import SplitWeek, TimeSeriesDataSplit
-from model_arma import HourlyARMA, PriceCorrARMA
+from model_arma import DataTimeIntvrvARMA, PriceCorrARMA
 from optimization import run_optimization
 
 
@@ -35,10 +35,10 @@ if __name__ == '__main__':
         if action == 'data':
             path_data =\
             '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_1.csv'
-
+            #
             print_process('Loading Data')
             df = pd.read_csv(path_data)
-
+            #
             print_process('Data Preprocessing')
             ch = ChooseHousehold(household_id)
             df = ch.transform(df)
@@ -54,20 +54,10 @@ if __name__ == '__main__':
             #
             ets = ExtractTimeSeries(datetime_col='DateTime', yt_col='KWH/hh (per half hour) ')
             df = ets.transform(df)
-            print_process('Saving Data')
+            #
             path_to_clean_data = '../clean_data/'+household_id+'.csv'
             df.to_csv(path_to_clean_data)
-            print 'Clean data saved in: {}'.format(path_to_clean_data)
-            '''print
-            print 'To train model for this particular household type in command line:'
-            print 'python main.py model {}'.format(household_id)
-            print
-            print 'To train model and run optimization type:'
-            print 'python main.py model_opt {}'.format(household_id)
-            print
-            print 'To train model for an other household type in command line:'
-            print 'python main.py model <household_id>' '''
-            print
+            print_process('Clean data saved in: {}'.format(path_to_clean_data))
 #=============================================================================================
         if action == 'model':
             path_to_clean_data = '../clean_data/'+household_id+'.csv'
@@ -82,19 +72,16 @@ if __name__ == '__main__':
             tsds = TimeSeriesDataSplit(environment_params)
             df_train, df_test = tsds.train_test_split(df)
             #
-            #part_of_week = environment_params['part_of_week'].values[0]
-            #train_days = str(environment_params['train_days'].values[0])
+            print_process('Training Data Time Intvrvals ARMA Model')
+            dtiarma = DataTimeIntvrvARMA(environment_params)
+            dtiarma.fit(df_train)
+            print_process('Making predictions for Data Time Intvrvals ARMA Model')
+            dtiarma.predict(df_test)
             #
-            print_process('Training Hourly ARMA Model')
-            harma = HourlyARMA(environment_params)
-            harma.fit(df_train, df_test)
-            harma.predict(df_test)
-            #
-            print_process('Training Price Correlated ARMA Model')
-            #price_file_name = environment_params['price_file_name'].values[0]
+            '''print_process('Training Price Correlated ARMA Model')
             pcarma =PriceCorrARMA(environment_params)
             pcarma.fit(df_train, df_test)
-            pcarma.predict()
+            pcarma.predict()'''
 #=============================================================================================
         if action == 'opt':
             model_name = environment_params['model_name'].values[0]

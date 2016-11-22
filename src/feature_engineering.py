@@ -76,7 +76,7 @@ class TimeSeriesDataSplit(object):
         return df_train, df_test
 
 
-class ModelsTimeSlices(object):
+class ModelsDataTimeInterv(object):
 
     def transform(self, df):
         '''Transform input
