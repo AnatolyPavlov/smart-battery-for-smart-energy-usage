@@ -9,9 +9,8 @@ def extract_days(df):
     days = []
     for i, datetime in enumerate(datetimes):
         if datetime.date() not in days:
-            print datetime.date()
             days.append(datetime.date())
-    return days.sort()
+    return days
 
 def print_process(process):
     print

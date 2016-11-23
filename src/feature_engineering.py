@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import timedelta
 
 # Custom Modules:
-from auxiliary_functions import print_process
+from auxiliary_functions import print_process, extract_days
 
 class SplitWeek(object):
     '''This class splits time series data
@@ -18,8 +18,10 @@ class SplitWeek(object):
         temp = pd.DatetimeIndex(df.index)
         df['weekday'] = temp.weekday
         df_weekdays = df[df['weekday'] <= 4].drop('weekday', axis=1)
+        weekdays = extract_days(df_weekdays)
         df_weekends = df[df['weekday'] > 4].drop('weekday', axis=1)
-        print 'weekdays: {}, weekends: {}'.format(len(df_weekdays)/48, len(df_weekends)/48)
+        weekends = extract_days(df_weekends)
+        print 'weekdays: {}, weekends: {}'.format(len(weekdays), len(weekends))
         print
         part_of_week = self.environment_params['part_of_week'].values[0]
         #

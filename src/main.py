@@ -27,7 +27,7 @@ from optimization import run_optimization
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print 'To run code correctly enter in command line:'
-        print 'python main.py <action> <household_id>'
+        print 'python main.py <action> where action = {data, model, opt}'
     else:
         action = sys.argv[1]
         environment_params = pd.read_csv('../params/environment_params.txt', delim_whitespace=True)
