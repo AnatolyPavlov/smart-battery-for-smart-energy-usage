@@ -91,18 +91,18 @@ class ModelsDataTimeInterv(object):
                 days.append(datetime.date())
         #
         day = days[0]
-        next_day = day + timedelta(days=1)
-        hours_in_day = []
+        next_day = days[1]
+        time_intervs_in_day = []
         for i, datetime in enumerate(df.query('index >= @day and index < @next_day').index):
-            if datetime.time() not in hours_in_day:
-                hours_in_day.append(datetime.time())
+            if datetime.time() not in time_intervs_in_day:
+                time_intervs_in_day.append(datetime.time())
         #
         df['time'] = [d.time() for i, d in enumerate(df.index)]
-        houry_sliced_data = {} # key=hour slice, values = pd.DataFrame with daily time series
-        for hour in hours_in_day:
-            houry_sliced_data[hour] = df[df['time']==hour].drop('time', axis=1)
+        time_intervs_data = {} # key=hour slice, values = pd.DataFrame with daily time series
+        for time_intv in time_intervs_in_day:
+            time_intervs_data[time_intv] = df[df['time']==time_intv].drop('time', axis=1)
         #
-        return hours_in_day, houry_sliced_data
+        return time_intervs_in_day, time_intervs_data
 
 class ModelsCorrPrice(object):
 

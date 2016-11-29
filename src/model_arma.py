@@ -1,6 +1,7 @@
 '''This module defines classes for machine learning models.'''
 import pandas as pd
 import pyflux as pf
+import cPickle as pickle
 from datetime import timedelta
 from sklearn.metrics import mean_squared_error, r2_score
 
@@ -8,23 +9,23 @@ from sklearn.metrics import mean_squared_error, r2_score
 from feature_engineering import ModelsDataTimeInterv, ModelsCorrPrice
 from auxiliary_functions import plot_pred_test, extract_days
 
-class DataTimeIntvrvARMA(object):
+class DataTimeIntervARMA(object):
 
     def __init__(self, environment_params):
         self.environment_params = environment_params
-        #
-        self._models = dict()
-        self.time_intervs_in_day = list()
 
     def fit(self, df):
+        part_of_week = self.environment_params['part_of_week'].values[0]
+        household_id = self.environment_params['household_id'].values[0]
+        train_days = str(self.environment_params['train_days'].values[0])
+        #
         '''The first step is to prepare data
         for multimodel training.'''
         mdti = ModelsDataTimeInterv()
-        self.time_intervs_in_day, time_intervs_data = mdti.transform(df)
+        time_intervs_in_day, time_intervs_data = mdti.transform(df)
         #
         '''Now data ready to be sent for training models for each time interval'''
         # Setting hyperparameters
-        part_of_week = self.environment_params['part_of_week'].values[0]
         p = 7
         q = 7
         if part_of_week == 'weekdays':
@@ -35,58 +36,26 @@ class DataTimeIntvrvARMA(object):
             q = 2
         #
         # Training models for each time interval
-        for time_intv in self.time_intervs_in_day:
+        models = {}
+        for time_intv in time_intervs_in_day:
             model=\
             pf.ARIMA(data=time_intervs_data[time_intv], ar=p, ma=q, target=df.columns[0])
             model.fit("MLE")
-            self._models[time_intv] = model
+            models[time_intv] = model
             print '  Trained for the time interval: {}'.format(time_intv)
-
-    def predict(self, df, num_days_pred=1):
-        household_id = self.environment_params['household_id'].values[0]
-        train_days = str(self.environment_params['train_days'].values[0])
-        part_of_week = self.environment_params['part_of_week'].values[0]
-        #
-        # Making predictions
-        df_pred = pd.DataFrame()
-        for time_intv in self.time_intervs_in_day:
-            pred = self._models[time_intv].predict(h=num_days_pred)[df.columns[0]]
-            df_dummy = pd.DataFrame(pred.values, columns=[df.columns[0]], index=pred.index)
-            df_pred = df_pred.append(df_dummy)
-        df_pred.sort_index(inplace=True, kind='mergesort')
-        #
-        first_day_to_pred = df.index[0].date()
-        days = extract_days(df)
-        last_day_to_pred = days[num_days_pred]
-        df_test_days = df.query('index >= @first_day_to_pred and index < @last_day_to_pred')
-        df_pred = pd.DataFrame(df_pred.values, columns=[df.columns[0]], index=df_test_days.index)
-        #
-        # Saving predicted and test days
-        path_to_pred = \
-        '../predictions/'+household_id+'_DataTimeIntvrvARMA_'+part_of_week+'_'+train_days+'.csv'
-        df_pred.to_csv(path_to_pred)
-        #
-        path_to_test =\
-        '../predictions/'+household_id+'_test_'+part_of_week+'_'+train_days+'.csv'
-        df_test_days.to_csv(path_to_test)
-        #
-        print 'Predictions saved into: {}'.format(path_to_pred)
         print
-        print 'The model DataTimeIntvrvARMA was trained for the following set of parameters:'
+        print 'The model DataTimeIntervARMA was trained for the following set of parameters:'
         print 'household_id: {}, part of week: {}, number of train days: {}'\
         .format(household_id, part_of_week, train_days)
-        print
         #
-        # Computing scores for predicted and test data and displaying them
+        # Saving models
+        path_to_models =\
+        '../saved_models/'+household_id+'_DataTimeIntervARMA_'+part_of_week+'_'+train_days+'.pkl'
+        with open(path_to_models, 'w') as f:
+            pickle.dump(models, f)
         print
-        print 'Score of DataTimeIntvrvARMA: MSE = {}'\
-        .format(mean_squared_error(df_test_days.values, df_pred.values))
-        print 'Score of DataTimeIntvrvARMA: R^2 = {}'\
-        .format(r2_score(df_test_days.values, df_pred.values))
-        print '-----------------------------------------------------------------------------------'
-        #
-        # Plotting prediction and test day data
-        plot_pred_test(df_test_days, df_pred, first_day_to_pred, 'DataTimeIntvrvARMA', self.environment_params)
+        print 'The model was saved into: {}'.format(path_to_models)
+
 
 class PriceCorrARMA(object):
 

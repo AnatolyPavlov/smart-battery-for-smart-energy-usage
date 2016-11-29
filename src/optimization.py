@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import linprog
 
 # Custom Modules:
-from auxiliary_functions import plot_results, print_process, plot_battery_savings
+from auxiliary_functions import plot_results, print_process, plot_battery_savings, extract_days
 
 class MinimizeDailyBill(object):
 
@@ -82,6 +82,7 @@ def run_optimization(environment_params):
     model_name = environment_params['model_name'].values[0]
     part_of_week = environment_params['part_of_week'].values[0]
     train_days = str(environment_params['train_days'].values[0])
+    #num_days_pred = int(environment_params['num_days_pred'].values[0])
     price_file_name = environment_params['price_file_name'].values[0]
     #
     path_to_pred = '../predictions/'+household_id+'_'+model_name+'_'+part_of_week+'_'+train_days+'.csv'
@@ -93,6 +94,18 @@ def run_optimization(environment_params):
     test = pd.read_csv(path_to_test, parse_dates=True, index_col='Unnamed: 0')
     test = pd.DataFrame(test.values, columns=[test.columns[0]], index=demand.index)
     price = pd.read_csv(path_to_price, parse_dates=True, index_col='Unnamed: 0')
+    #
+    ''' Extrapolation of one day pricing data to a number of days in the demand,
+    in case there are no pricing data for the same number of days as in demand.'''
+    demand_days = extract_days(demand)
+    num_demand_days = len(demand_days)
+    price_days = extract_days(price)
+    num_price_days = len(price_days)
+    if num_demand_days > num_price_days:
+        price_last_day = price_days[num_price_days-1]
+        price_dummy = price.query('index >= @price_last_day')
+        for day_gap in xrange(num_demand_days-num_price_days):
+            price = price.append(price_dummy)
     price = pd.DataFrame(price.values, columns=[price.columns[0]], index=demand.index)
     #
     battery_params = pd.read_csv('../params/battery_params.txt', delim_whitespace=True)

@@ -8,8 +8,8 @@ import sys
 from datetime import timedelta
 
 # Custom Modules:
-from auxiliary_functions import print_process
-from data_preprocessing import ChooseHousehold
+from auxiliary_functions import print_process, extract_days
+from data_preprocessing import ChooseHousehold, ExtractTimeSeries
 
 def show_households(df):
     print
@@ -22,30 +22,33 @@ def show_households(df):
 
 
 def show_households_details(df, household_id, datetime_col):
-    datetimes = pd.to_datetime(df[datetime_col])
-    days = []
-    for i, datetime in enumerate(datetimes):
-        if datetime.date() not in days:
-            days.append(datetime.date())
-
+    ets = ExtractTimeSeries(datetime_col, 'KWH/hh (per half hour) ')
+    df = ets.transform(df)
+    days = extract_days(df)
+    #
+    temp = pd.DatetimeIndex(df.index)
+    df['weekday'] = temp.weekday
+    df_weekdays = df[df['weekday'] <= 4]
+    weekdays = extract_days(df_weekdays)
+    df_weekends = df[df['weekday'] > 4]
+    weekends = extract_days(df_weekends)
     print
-    print 'Total number of days for the household {} is: {}'.format(household_id, len(days))
+    print 'The total number of days for the household {} is: {}, where weekdays: {} and weekends: {}'\
+    .format(household_id,len(days),len(weekdays),len(weekends))
     print
 
 def main():
-    path_data =\
-    '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_1.csv'
-    path_data2 =\
-    '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_2.csv'
+    file_num = raw_input('Enter the file number (1 to 168) which you want to look at: ')
+    path_to_data = '../data/Power-Networks-LCL-June2015(withAcornGps)v2_'+file_num+'.csv'
 
     print_process('Loading Data')
-    df = pd.read_csv(path_data)
+    df = pd.read_csv(path_to_data)
     #
     households = show_households(df)
     for household_id in households:
         ch = ChooseHousehold(household_id)
-        df = ch.transform(df)
-        show_households_details(df, household_id, 'DateTime')
+        dfh = ch.transform(df)
+        show_households_details(dfh, household_id, 'DateTime')
 
 
 if __name__ == '__main__':

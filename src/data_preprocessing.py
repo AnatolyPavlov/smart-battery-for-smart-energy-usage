@@ -7,6 +7,10 @@ measurements of the power set as values in a single column in the pd.DataFrame.'
 
 import pandas as pd
 from datetime import timedelta
+
+# Custom Modules:
+from auxiliary_functions import extract_days
+
 pd.options.mode.chained_assignment = None
 
 class ChooseHousehold(object):
@@ -48,13 +52,10 @@ class CleanData(object):
         return df_out
 
     def drop_incomplete_days(self, df):
-        datetimes = pd.to_datetime(df[self.datetime_col])
-        days = []
-        for i, datetime in enumerate(datetimes):
-            if datetime.date() not in days:
-                days.append(datetime.date())
+        days = extract_days(df, self.datetime_col)
         #
         days_to_drop = []
+        datetimes = pd.to_datetime(df[self.datetime_col])
         for i, day in enumerate(days):
             next_day = day + timedelta(days=1)
             df_day = df[(datetimes >= day) & (datetimes < next_day)]

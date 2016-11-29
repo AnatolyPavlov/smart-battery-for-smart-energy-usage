@@ -9,6 +9,8 @@ To run data preprocessing: python main.py data
 
 To train model: python main.py model
 
+To make predictions: python main.py pred
+
 To run optimization: python main.py opt
 '''
 import sys
@@ -20,7 +22,8 @@ from data_preprocessing import ChooseHousehold, ConvertStrFloat,\
 CleanData, ExtractTimeSeries
 
 from feature_engineering import SplitWeek, TimeSeriesDataSplit
-from model_arma import DataTimeIntvrvARMA, PriceCorrARMA
+from model_arma import DataTimeIntervARMA, PriceCorrARMA
+from predict_arma import PredDataTimeIntervARMA
 from optimization import run_optimization
 
 
@@ -33,11 +36,11 @@ if __name__ == '__main__':
         environment_params = pd.read_csv('../params/environment_params.txt', delim_whitespace=True)
         household_id = environment_params['household_id'].values[0]
         if action == 'data':
-            path_data =\
-            '../data/Power-Networks-LCL-June2015(withAcornGps).csv_Pieces/Power-Networks-LCL-June2015(withAcornGps)v2_1.csv'
+            file_num = raw_input('Enter the file number (1 to 168) whose data you want to preproces: ')
+            path_to_data = '../data/Power-Networks-LCL-June2015(withAcornGps)v2_'+file_num+'.csv'
             #
             print_process('Loading Data')
-            df = pd.read_csv(path_data)
+            df = pd.read_csv(path_to_data)
             #
             print_process('Data Preprocessing')
             ch = ChooseHousehold(household_id)
@@ -72,16 +75,28 @@ if __name__ == '__main__':
             tsds = TimeSeriesDataSplit(environment_params)
             df_train, df_test = tsds.train_test_split(df)
             #
-            print_process('Training Data Time Intvrvals ARMA Model')
-            dtiarma = DataTimeIntvrvARMA(environment_params)
-            dtiarma.fit(df_train)
-            print_process('Making predictions for Data Time Intvrvals ARMA Model')
-            dtiarma.predict(df_test)
+            model_name = environment_params['model_name'].values[0]
+            print_process('Training '+model_name+' Model')
+            if model_name == 'DataTimeIntervARMA':
+                dtiarma = DataTimeIntervARMA(environment_params)
+                dtiarma.fit(df_train)
             #
             '''print_process('Training Price Correlated ARMA Model')
-            pcarma =PriceCorrARMA(environment_params)
+            pcarma = PriceCorrARMA(environment_params)
             pcarma.fit(df_train, df_test)
             pcarma.predict()'''
+#=============================================================================================
+        if action == 'pred':
+            train_days = str(environment_params['train_days'].values[0])
+            part_of_week = environment_params['part_of_week'].values[0]
+            path_to_test_data = '../clean_data/'+household_id+'_test_'+part_of_week+'_'+train_days+'.csv'
+            df_test = pd.read_csv(path_to_test_data, parse_dates=True, index_col='Unnamed: 0')
+            #
+            model_name = environment_params['model_name'].values[0]
+            print_process('Making predictions from '+model_name+' Model')
+            if model_name == 'DataTimeIntervARMA':
+                pdtia = PredDataTimeIntervARMA(environment_params)
+                pdtia.predict(df_test)
 #=============================================================================================
         if action == 'opt':
             model_name = environment_params['model_name'].values[0]

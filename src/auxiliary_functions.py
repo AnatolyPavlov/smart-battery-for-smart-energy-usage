@@ -2,10 +2,13 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def extract_days(df):
+def extract_days(df, datetime_col=None):
     '''INPUT: DataFrame of time series where index is datetime
        OUTPUT: list of unique days from DataFrame'''
-    datetimes = pd.to_datetime(df.index)
+    if datetime_col == None:
+        datetimes = pd.to_datetime(df.index)
+    else:
+        datetimes = pd.to_datetime(df[datetime_col])
     days = []
     for i, datetime in enumerate(datetimes):
         if datetime.date() not in days:
@@ -21,14 +24,15 @@ def plot_pred_test(df_test_day, df_pred, day_to_pred, model_name, environment_pa
     household_id = environment_params['household_id'].values[0]
     train_days = str(environment_params['train_days'].values[0])
     part_of_week = environment_params['part_of_week'].values[0]
+    num_days_pred = str(environment_params['num_days_pred'].values[0])
     #
     plt.plot(df_test_day, color='b', label='Actual Demand')
     plt.plot(df_pred, color='g', label='Predicted Demand')
     plt.legend(loc='best', prop={'size':16})
     plt.xlabel('Time', fontsize=15)
     plt.ylabel(df_test_day.columns[0], fontsize=15)
-    plt.title('Predicted and Actual Demand for: {}'.format(str(day_to_pred)), fontsize=15)
-    plt.savefig('../img/'+household_id+'_'+model_name+'_'+part_of_week+'_'+train_days+'.png')
+    plt.title('Predicted and Actual Demand for {} days beginning at: {}'.format(num_days_pred,str(day_to_pred)), fontsize=15)
+    plt.savefig('../img/'+household_id+'_'+model_name+'_'+part_of_week+'_'+train_days+'_'+num_days_pred+'.png')
     plt.show()
 
 def plot_results(demand, price, battery, day_to_pred, model_name, part_of_week, household_id, train_days, battery_capacity):
