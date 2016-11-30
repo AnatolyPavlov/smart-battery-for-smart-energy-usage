@@ -15,11 +15,6 @@ class MinimizeDailyBill(object):
         self.e = efficiency
         self.alpha = charging_rate
         #
-        self.g = list()
-        self.c = list()
-        self.a = list()
-        self.E = list()
-        #
         self.daily_bill = None
 
     def fit(self, demand, price):
@@ -64,18 +59,23 @@ class MinimizeDailyBill(object):
         res =\
         linprog(c=p_vec, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, options={"disp": False})
         self.daily_bill = res.fun
+        #
+        g = []
+        c = []
+        a = []
+        E = []
         sum_c = 0
         sum_a = 0
         for i in xrange(len(demand)):
-            self.g.append(res.x[3*i])
-            self.c.append(res.x[3*i+1])
-            self.a.append(res.x[3*i+2])
+            g.append(res.x[3*i])
+            c.append(res.x[3*i+1])
+            a.append(res.x[3*i+2])
             #
-            sum_c += self.c[i]
-            sum_a += self.a[i]
-            self.E.append(sum_c - sum_a/self.e)
+            sum_c += c[i]
+            sum_a += a[i]
+            E.append(sum_c - sum_a/self.e)
 
-        return pd.DataFrame(self.E, columns=['Battery'], index=demand.index)
+        return pd.DataFrame(E, columns=['Battery'], index=demand.index)
 
 def run_optimization(environment_params):
     household_id = environment_params['household_id'].values[0]
