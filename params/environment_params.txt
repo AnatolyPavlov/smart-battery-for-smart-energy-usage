@@ -1,2 +1,2 @@
 household_id   model_name           part_of_week   train_days  num_days_pred   price_file_name
-MAC000060      DataTimeIntervARMA     weekdays        300            3         price_data_London
+MAC000002      DataTimeIntervARMA        weekdays        350            1         price_data_London

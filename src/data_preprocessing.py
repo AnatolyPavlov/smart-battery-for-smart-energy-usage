@@ -39,19 +39,23 @@ class CleanData(object):
         self.datetime_col = datetime_col
         self.yt_col = yt_col
 
-    def drop_duplicate_records(self, df):
-        df_out = df.drop_duplicates(subset=self.datetime_col, keep='first')
-        return df_out
+    def transform(self, df):
+        # Dropping duplicate records
+        df = df.drop_duplicates(subset=self.datetime_col, keep='first')
+        #
+        # Dropping missing values
+        df = df.dropna(how='any', subset=[self.yt_col], thresh=1)
+        #
+        # Dropping null values
+        return df.loc[df[self.yt_col] != 0]
 
-    def drop_missing_val(self, df):
-        df_out = df.dropna(how='any', subset=[self.yt_col], thresh=1)
-        return df_out
+class DropIncompleteDays(object):
 
-    def drop_null_val(self, df):
-        df_out = df.loc[df[self.yt_col] != 0]
-        return df_out
+    def __init__(self, datetime_col, num_records_aday):
+        self.datetime_col = datetime_col
+        self.num_records_aday = num_records_aday
 
-    def drop_incomplete_days(self, df):
+    def transform(self, df):
         days = extract_days(df, self.datetime_col)
         #
         days_to_drop = []
@@ -59,15 +63,14 @@ class CleanData(object):
         for i, day in enumerate(days):
             next_day = day + timedelta(days=1)
             df_day = df[(datetimes >= day) & (datetimes < next_day)]
-            if len(df_day) < 48:
+            if len(df_day) < self.num_records_aday:
                 days_to_drop.append(day)
 
         daytimes_indexes = []
         for i, datetime in enumerate(datetimes):
             if datetime.date() in days_to_drop:
                 daytimes_indexes.append(df.index[i])
-        df_out = df.drop(daytimes_indexes)
-        return df_out
+        return df.drop(daytimes_indexes)
 
 class ExtractTimeSeries(object):
 
@@ -78,6 +81,6 @@ class ExtractTimeSeries(object):
     def transform(self, df):
         df[self.datetime_col] = pd.Series(pd.to_datetime(df[self.datetime_col]),\
         index=df.index)
-        df_out = pd.DataFrame(df[self.yt_col].values, columns=[self.yt_col],\
+        df = pd.DataFrame(df[self.yt_col].values, columns=[self.yt_col],\
                                     index=df[self.datetime_col].values)
-        return df_out
+        return df

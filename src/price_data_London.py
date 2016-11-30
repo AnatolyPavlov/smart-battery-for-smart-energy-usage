@@ -5,6 +5,7 @@ from datetime import timedelta
 
 # Custom Modules:
 from data_preprocessing import ExtractTimeSeries
+from auxiliary_functions import print_process
 
 def main():
     df = pd.read_excel('../data/Tariffs.xlsx')
@@ -19,15 +20,11 @@ def main():
     next_day = day + timedelta(days=1)
     df_out = df.query('index >= @day and index < @next_day')
     df_out.columns=['Tariff (UK Pounds)']
-    print df_out
     #
-    print
-    print
-    print '## Saving Post-Processed Data'
-    print
+    print_process('Saving Post-Processed Data')
     path_to_price = '../clean_data/price_data_London.csv'
     df_out.to_csv(path_to_price)
-    print 'Train data saved into: {}'.format(path_to_price)
+    print 'Tariff data saved into: {}'.format(path_to_price)
     print
 
 if __name__ == '__main__':

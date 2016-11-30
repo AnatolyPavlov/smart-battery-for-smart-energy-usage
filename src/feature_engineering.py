@@ -2,7 +2,7 @@
 
 import pandas as pd
 from collections import defaultdict
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 # Custom Modules:
 from auxiliary_functions import print_process, extract_days
@@ -10,7 +10,6 @@ from auxiliary_functions import print_process, extract_days
 class SplitWeek(object):
     '''This class splits time series data
     into two subsets grouped by weekday and weekend.'''
-
     def __init__(self, environment_params):
         self.environment_params = environment_params
 
@@ -51,10 +50,8 @@ class TimeSeriesDataSplit(object):
         if train_days < 10:
             print 'There must be at least 10 days in training set!'
             return
-        days = []
-        for i, datetime in enumerate(df.index):
-            if datetime.date() not in days:
-                days.append(datetime.date())
+        #
+        days = extract_days(df)
         print '{}th day: {}'.format(train_days, days[train_days-1])
         test_set_first_date = days[train_days]
         #
@@ -85,11 +82,7 @@ class ModelsDataTimeInterv(object):
         time series into a set of time series for
         each hourly-slice in a day, where each time
         series for a given hour has days as its agument.'''
-        days = []
-        for i, datetime in enumerate(df.index):
-            if datetime.date() not in days:
-                days.append(datetime.date())
-        #
+        days = extract_days(df)
         day = days[0]
         next_day = days[1]
         time_intervs_in_day = []
@@ -97,12 +90,12 @@ class ModelsDataTimeInterv(object):
             if datetime.time() not in time_intervs_in_day:
                 time_intervs_in_day.append(datetime.time())
         #
-        df['time'] = [d.time() for i, d in enumerate(df.index)]
-        time_intervs_data = {} # key=hour slice, values = pd.DataFrame with daily time series
+        df['time'] = [d.time() for i, d in enumerate(df.index)]# Adding time only column
+        time_intervs_data = {} # key=time interval, values = pd.DataFrame with daily time series
         for time_intv in time_intervs_in_day:
             time_intervs_data[time_intv] = df[df['time']==time_intv].drop('time', axis=1)
         #
-        return time_intervs_in_day, time_intervs_data
+        return time_intervs_data
 
 class ModelsCorrPrice(object):
 
@@ -111,36 +104,64 @@ class ModelsCorrPrice(object):
 
     def transform(self, df, test_data=False):
         ''' transf '''
-        days = []
-        for i, datetime in enumerate(df.index):
-            if datetime.date() not in days:
-                days.append(datetime.date())
-        #
-        day = days[0]
-        next_day = day + timedelta(days=1)
-        hours_in_day = []
-        for i, datetime in enumerate(df.query('index >= @day and index < @next_day').index):
-            if datetime.time() not in hours_in_day:
-                hours_in_day.append(datetime.time())
-        #
         price = pd.read_csv(self.path_to_price, parse_dates=True, index_col='Unnamed: 0')
-        prices_unique = price[price.columns[0]].unique()
-        times_corr_by_price = defaultdict(list) # key=price, val=list of times for that price
+        times_corr_by_price = {}# key=price corr., time intv., val=list of original time intervs.
+        dummy_time_list = []
         for i, pr in enumerate(price[price.columns[0]]):
-            if pr in prices_unique:
-                times_corr_by_price[pr].append(price.index[i].time())
+            if i < len(price)-1:
+                if pr == price[price.columns[0]][i+1]:
+                    dummy_time_list.append(price.index[i].time())
+                else:
+                    dummy_time_list.append(price.index[i].time())
+                    times_corr_by_price[price.index[i].time()] = dummy_time_list
+                    dummy_time_list = []
+            else:
+                dummy_time_list.append(price.index[i].time())
+                times_corr_by_price[price.index[i].time()] = dummy_time_list
         #
-        df['time'] = [d.time() for i, d in enumerate(df.index)]
+        '''price_corr_data: key=price corr., time intv.,
+        val=dict with keys=time intervs vals=lists of smar meter redings over past days.'''
         price_corr_data = {}
-        for pr, times in times_corr_by_price.iteritems():
-            price_corr_data[pr] =\
+        df['time'] = [d.time() for i, d in enumerate(df.index)]# Adding time only column
+        for time_intv, times in times_corr_by_price.iteritems():
+            price_corr_data[time_intv] =\
             {time: df[df['time']==time].drop('time', axis=1)[df.columns[0]].values for time in times}
 
-        data_means_grouped_by_price = {}
-        for pr, data in price_corr_data.iteritems():
-            data_means_grouped_by_price[pr] = pd.DataFrame(pd.DataFrame(data).mean(axis=1).values,\
-            columns=[df.columns[0]], index=days)
-        #
+        days = extract_days(df)
         if test_data:
-            return data_means_grouped_by_price
-        return prices_unique, data_means_grouped_by_price, times_corr_by_price
+            data_means_grouped_by_price = pd.DataFrame()
+            for time_intv, data in price_corr_data.iteritems():
+                data_means_grouped_by_price =\
+                data_means_grouped_by_price.append(pd.DataFrame(pd.DataFrame(data).mean(axis=1).values,\
+                columns=[df.columns[0]],\
+                index=[datetime.combine(day, time_intv) for day in days]))
+            data_means_grouped_by_price.sort_index(inplace=True, kind='mergesort')
+        else:
+            data_means_grouped_by_price = {}
+            for time_intv, data in price_corr_data.iteritems():
+                data_means_grouped_by_price[time_intv] =\
+                pd.DataFrame(pd.DataFrame(data).mean(axis=1).values,\
+                columns=[df.columns[0]],\
+                index=[datetime.combine(day, time_intv) for day in days])
+        #
+        return data_means_grouped_by_price
+
+    def transform_inverse(self, df):
+        price = pd.read_csv(self.path_to_price, parse_dates=True, index_col='Unnamed: 0')
+        #
+        index = []
+        values = []
+        days = extract_days(df)
+        time_intervs_in_day = [d.time() for i, d in enumerate(price.index)]
+        for day in days:
+            i = 0
+            for time_intv in time_intervs_in_day:
+                if time_intv <= df.index[i].time():
+                    values.append(df.values[i][0])
+                    index.append(datetime.combine(day, time_intv))
+                else:
+                    i+=1
+                    values.append(df.values[i][0])
+                    index.append(datetime.combine(day, time_intv))
+        df_out = pd.DataFrame(values, columns=[df.columns[0]], index=index)
+        return df_out

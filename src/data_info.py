@@ -12,12 +12,9 @@ from auxiliary_functions import print_process, extract_days
 from data_preprocessing import ChooseHousehold, ExtractTimeSeries
 
 def show_households(df):
-    print
-    print 'All households in this subset of data:'
+    print_process('All households in this subset of data:')
     print df['LCLid'].unique()
-    print
-    print 'Total number of households: {}'.format(len(df['LCLid'].unique()))
-    print
+    print_process('Total number of households: {}'.format(len(df['LCLid'].unique())))
     return df['LCLid'].unique()
 
 

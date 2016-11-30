@@ -15,14 +15,16 @@ To run optimization: python main.py opt
 '''
 import sys
 import pandas as pd
+from sklearn.metrics import mean_squared_error, r2_score
 
 # Custom Modules:
-from auxiliary_functions import print_process
+from auxiliary_functions import print_process, plot_pred_test, extract_days
 from data_preprocessing import ChooseHousehold, ConvertStrFloat,\
-CleanData, ExtractTimeSeries
+CleanData, DropIncompleteDays, ExtractTimeSeries
 
-from feature_engineering import SplitWeek, TimeSeriesDataSplit
-from model_arma import DataTimeIntervARMA, PriceCorrARMA
+from feature_engineering import SplitWeek, TimeSeriesDataSplit,\
+ModelsDataTimeInterv, ModelsCorrPrice
+from model_arma import DataTimeIntervARMA
 from predict_arma import PredDataTimeIntervARMA
 from optimization import run_optimization
 
@@ -50,10 +52,10 @@ if __name__ == '__main__':
             df = csf.transform(df)
             #
             cd = CleanData(datetime_col='DateTime', yt_col='KWH/hh (per half hour) ')
-            df = cd.drop_duplicate_records(df)
-            df = cd.drop_missing_val(df)
-            df = cd.drop_null_val(df)
-            df = cd.drop_incomplete_days(df)
+            df = cd.transform(df)
+            #
+            did = DropIncompleteDays(datetime_col='DateTime', num_records_aday=48)
+            df = did.transform(df)
             #
             ets = ExtractTimeSeries(datetime_col='DateTime', yt_col='KWH/hh (per half hour) ')
             df = ets.transform(df)
@@ -67,7 +69,6 @@ if __name__ == '__main__':
             print_process('Loading Postprocessed Data')
             df = pd.read_csv(path_to_clean_data, parse_dates=True, index_col='Unnamed: 0')
             #
-            print_process('Engineering Features')
             sp = SplitWeek(environment_params)
             df = sp.transform(df)
             #
@@ -76,27 +77,74 @@ if __name__ == '__main__':
             df_train, df_test = tsds.train_test_split(df)
             #
             model_name = environment_params['model_name'].values[0]
-            print_process('Training '+model_name+' Model')
             if model_name == 'DataTimeIntervARMA':
+                print_process('Engineering Features for '+model_name+' Model')
+                mdti = ModelsDataTimeInterv()
+                time_intervs_data = mdti.transform(df_train)
+                #
+                print_process('Training '+model_name+' Model')
                 dtiarma = DataTimeIntervARMA(environment_params)
-                dtiarma.fit(df_train)
+                dtiarma.fit(time_intervs_data)
             #
-            '''print_process('Training Price Correlated ARMA Model')
-            pcarma = PriceCorrARMA(environment_params)
-            pcarma.fit(df_train, df_test)
-            pcarma.predict()'''
+            if model_name == 'PriceCorrARMA':
+                print_process('Engineering Features for '+model_name+' Model')
+                price_file_name = environment_params['price_file_name'].values[0]
+                mcp = ModelsCorrPrice(price_file_name)
+                data_means_grouped_by_price = mcp.transform(df_train)
+                #
+                print_process('Training '+model_name+' Model')
+                dtiarma = DataTimeIntervARMA(environment_params)
+                dtiarma.fit(data_means_grouped_by_price)
 #=============================================================================================
         if action == 'pred':
+            model_name = environment_params['model_name'].values[0]
+            print_process('Making predictions from '+model_name+' Model')
+            pdtia = PredDataTimeIntervARMA(environment_params)
+            df_pred = pdtia.predict()
+            #
+            # Loading test data and extracting only days specified to compare predictions with
             train_days = str(environment_params['train_days'].values[0])
             part_of_week = environment_params['part_of_week'].values[0]
+            num_days_pred = environment_params['num_days_pred'].values[0]
+            #
             path_to_test_data = '../clean_data/'+household_id+'_test_'+part_of_week+'_'+train_days+'.csv'
             df_test = pd.read_csv(path_to_test_data, parse_dates=True, index_col='Unnamed: 0')
             #
-            model_name = environment_params['model_name'].values[0]
-            print_process('Making predictions from '+model_name+' Model')
-            if model_name == 'DataTimeIntervARMA':
-                pdtia = PredDataTimeIntervARMA(environment_params)
-                pdtia.predict(df_test)
+            days = extract_days(df_test)
+            first_day_to_pred = days[0]
+            last_day_to_pred = days[num_days_pred]
+            df_test_days = df_test.query('index >= @first_day_to_pred and index < @last_day_to_pred')
+            #
+            if model_name == 'PriceCorrARMA':
+                price_file_name = environment_params['price_file_name'].values[0]
+                mcp = ModelsCorrPrice(price_file_name)
+                df_pred = mcp.transform_inverse(df_pred)
+                #
+                df_test_days = mcp.transform(df_test_days, test_data=True)
+                df_test_days = mcp.transform_inverse(df_test_days)
+            #
+            df_pred = pd.DataFrame(df_pred.values, columns=[df_pred.columns[0]], index=df_test_days.index)
+            #
+            # Saving predicted and test days
+            path_to_pred = \
+            '../predictions/'+household_id+'_'+model_name+'_'+part_of_week+'_'+train_days+'.csv'
+            df_pred.to_csv(path_to_pred)
+            #
+            path_to_test =\
+            '../predictions/'+household_id+'_test_'+part_of_week+'_'+train_days+'.csv'
+            df_test_days.to_csv(path_to_test)
+            print 'Predictions saved into: {}'.format(path_to_pred)
+            print
+            #
+            # Computing scores for predicted and test data and displaying them
+            print 'Score of {}: MSE = {}'\
+            .format(model_name, mean_squared_error(df_test_days.values, df_pred.values))
+            print 'Score of {}: R^2 = {}'\
+            .format(model_name, r2_score(df_test_days.values, df_pred.values))
+            print '-----------------------------------------------------------------------------------'
+            #
+            # Plotting prediction and test day data
+            plot_pred_test(df_test_days, df_pred, first_day_to_pred, environment_params)
 #=============================================================================================
         if action == 'opt':
             model_name = environment_params['model_name'].values[0]

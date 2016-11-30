@@ -20,11 +20,12 @@ def print_process(process):
     print '## {}'.format(process)
     print
 
-def plot_pred_test(df_test_day, df_pred, day_to_pred, model_name, environment_params):
+def plot_pred_test(df_test_day, df_pred, day_to_pred, environment_params):
     household_id = environment_params['household_id'].values[0]
     train_days = str(environment_params['train_days'].values[0])
     part_of_week = environment_params['part_of_week'].values[0]
     num_days_pred = str(environment_params['num_days_pred'].values[0])
+    model_name = environment_params['model_name'].values[0]
     #
     plt.plot(df_test_day, color='b', label='Actual Demand')
     plt.plot(df_pred, color='g', label='Predicted Demand')
