@@ -82,7 +82,6 @@ def run_optimization(environment_params):
     model_name = environment_params['model_name'].values[0]
     part_of_week = environment_params['part_of_week'].values[0]
     train_days = str(environment_params['train_days'].values[0])
-    #num_days_pred = int(environment_params['num_days_pred'].values[0])
     price_file_name = environment_params['price_file_name'].values[0]
     #
     path_to_pred = '../predictions/'+household_id+'_'+model_name+'_'+part_of_week+'_'+train_days+'.csv'
